@@ -13,7 +13,8 @@ const cache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 min (historical data changes rarely)
 
 async function fetchJolpica(path) {
-  const url = `${BASE_URL}${path}.json`;
+  const [pathname, queryString] = path.split('?');
+  const url = `${BASE_URL}${pathname}.json${queryString ? `?${queryString}` : ''}`;
   const cached = cache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
@@ -143,16 +144,44 @@ export async function getPitStops(year, round) {
  * Get all world champions
  */
 export async function getWorldChampions(limit = 100) {
-  const data = await fetchJolpica(`/driverStandings/1?limit=${limit}`);
-  return data?.StandingsTable?.StandingsLists || [];
+  const seasons = await getSeasons(limit);
+  const results = await Promise.allSettled(
+    seasons.map(async ({ season }) => {
+      const standings = await getDriverStandings(season);
+      if (!standings?.length) return null;
+      return {
+        season,
+        round: standings[0]?.position ? standings[0].position : undefined,
+        DriverStandings: [standings[0]],
+      };
+    })
+  );
+
+  return results
+    .filter(result => result.status === 'fulfilled' && result.value)
+    .map(result => result.value);
 }
 
 /**
  * Get all constructor champions
  */
 export async function getConstructorChampions(limit = 100) {
-  const data = await fetchJolpica(`/constructorStandings/1?limit=${limit}`);
-  return data?.StandingsTable?.StandingsLists || [];
+  const seasons = await getSeasons(limit);
+  const results = await Promise.allSettled(
+    seasons.map(async ({ season }) => {
+      const standings = await getConstructorStandings(season);
+      if (!standings?.length) return null;
+      return {
+        season,
+        round: standings[0]?.position ? standings[0].position : undefined,
+        ConstructorStandings: [standings[0]],
+      };
+    })
+  );
+
+  return results
+    .filter(result => result.status === 'fulfilled' && result.value)
+    .map(result => result.value);
 }
 
 // ─── Season list ──────────────────────────────────────────────────────────────

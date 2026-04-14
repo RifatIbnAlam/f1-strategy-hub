@@ -128,6 +128,22 @@ function formatTime(seconds) {
   return `${parseFloat(secs).toFixed(3)}`;
 }
 
+function formatSessionLabel(session) {
+  const grandPrixName = session.meeting_name?.trim();
+  const locationLabel = [session.location, session.country_name].filter(Boolean).join(', ');
+  const sessionName = session.session_name?.trim() || session.session_type?.trim() || 'Session';
+  const sessionDate = session.date_start
+    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
+
+  const eventLabel = grandPrixName || locationLabel || session.circuit_short_name || `Session ${session.session_key}`;
+  const detailLabel = [sessionDate, session.circuit_short_name].filter(Boolean).join(' • ');
+
+  return detailLabel
+    ? `${eventLabel} — ${sessionName} (${detailLabel})`
+    : `${eventLabel} — ${sessionName}`;
+}
+
 /* ─── Main Telemetry Viewer ───────────────────────────────────────────────── */
 export default function TelemetryViewer() {
   const [year, setYear] = useState(new Date().getFullYear());
@@ -192,6 +208,16 @@ export default function TelemetryViewer() {
     });
   }, [drivers]);
 
+  const sessionOptions = useMemo(() => {
+    if (!sessions) return [];
+
+    return [...sessions].sort((a, b) => {
+      const aTime = a.date_start ? new Date(a.date_start).getTime() : 0;
+      const bTime = b.date_start ? new Date(b.date_start).getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [sessions]);
+
   return (
     <div>
       {/* Header */}
@@ -225,9 +251,9 @@ export default function TelemetryViewer() {
               <select value={selectedSession || ''} onChange={e => { setSelectedSession(e.target.value); setSelectedDriver(null); }}
                 style={{ width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6, color: '#fff', padding: '8px 12px', fontSize: 13 }}>
                 <option value="">Select a race...</option>
-                {sessions?.map(s => (
+                {sessionOptions.map(s => (
                   <option key={s.session_key} value={s.session_key}>
-                    {s.meeting_name} — {s.session_name}
+                    {formatSessionLabel(s)}
                   </option>
                 ))}
               </select>

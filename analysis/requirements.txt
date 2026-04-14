@@ -1,0 +1,14 @@
+# F1 Strategy Hub - Python Analysis Dependencies
+# Install: pip install -r requirements.txt
+
+fastf1>=3.8.0          # Official F1 timing & telemetry data
+pandas>=2.0.0          # Data manipulation
+numpy>=1.24.0          # Numerical computing
+matplotlib>=3.7.0      # Static visualizations
+seaborn>=0.12.0        # Statistical visualizations
+plotly>=5.18.0         # Interactive visualizations
+scipy>=1.10.0          # Statistical analysis
+scikit-learn>=1.3.0    # ML for predictions
+jupyter>=1.0.0         # Jupyter notebooks
+requests>=2.31.0       # HTTP requests to APIs
+python-dotenv>=1.0.0   # Environment variables

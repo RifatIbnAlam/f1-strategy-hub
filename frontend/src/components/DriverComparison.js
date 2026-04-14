@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -110,10 +110,6 @@ export default function DriverComparison() {
       }
     });
   }
-
-  // Points per race
-  const pointsPerRace1 = driver1 ? (parseFloat(driver1.points) / (parseInt(driver1.wins) || 1 + (results?.length || 1))).toFixed(1) : 0;
-  const pointsPerRace2 = driver2 ? (parseFloat(driver2.points) / (parseInt(driver2.wins) || 1 + (results?.length || 1))).toFixed(1) : 0;
 
   // Build race-by-race position chart data
   const racePositions = results?.map((race, i) => {

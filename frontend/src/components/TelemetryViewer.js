@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, AreaChart, Area, Legend,
+  ResponsiveContainer, Legend,
 } from 'recharts';
 import { useApi } from '../hooks/useApi';
-import { getSessions, getDrivers, getLaps, getStints, getCarData } from '../services/openf1';
+import { getSessions, getDrivers, getLaps, getStints } from '../services/openf1';
 import { getDriverColor } from '../data/constants';
 import { TIRE_COMPOUNDS } from '../data/constants';
-import { Activity, Loader, Radio, Gauge, Thermometer, Wind } from 'lucide-react';
+import { Activity, Loader, Radio, Gauge } from 'lucide-react';
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -15,28 +15,6 @@ const Card = ({ children, style }) => (
     border: '1px solid rgba(255,255,255,0.06)',
     borderRadius: 12, padding: 24, ...style,
   }}>{children}</div>
-);
-
-/* ─── Telemetry Trace ─────────────────────────────────────────────────────── */
-const TelemetryTrace = ({ data, dataKey, color, label, unit, yDomain }) => (
-  <div style={{ marginBottom: 4 }}>
-    <div style={{ fontSize: 11, color: '#888', fontWeight: 600, marginBottom: 4, letterSpacing: '0.5px' }}>
-      {label}
-    </div>
-    <ResponsiveContainer width="100%" height={120}>
-      <AreaChart data={data} margin={{ top: 2, right: 10, left: 0, bottom: 2 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1a1a2e" />
-        <XAxis dataKey="index" hide />
-        <YAxis stroke="#333" fontSize={10} domain={yDomain || ['auto', 'auto']}
-          tickFormatter={v => `${v}${unit || ''}`} width={45} />
-        <Tooltip
-          contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, fontSize: 11 }}
-          formatter={(v) => [`${v}${unit || ''}`, label]}
-        />
-        <Area type="monotone" dataKey={dataKey} stroke={color} fill={`${color}20`} strokeWidth={1.5} dot={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  </div>
 );
 
 /* ─── Lap Time Table ──────────────────────────────────────────────────────── */

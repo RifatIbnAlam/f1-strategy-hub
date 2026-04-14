@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Area, AreaChart
 } from 'recharts';
-import { Timer, Play, RotateCcw, Plus, Trash2, Settings, Zap, AlertTriangle } from 'lucide-react';
+import { Timer, Plus, Trash2, Settings, Zap, AlertTriangle } from 'lucide-react';
 import { TIRE_COMPOUNDS } from '../data/constants';
 
 /* ─── Tire Physics Model ──────────────────────────────────────────────────── */
@@ -192,7 +192,7 @@ export default function StrategySimulator() {
         totalLaps: currentLap,
       };
     });
-  }, [strategies, circuit, tireDegModel, cliffLap, trackEvolution, config, startFuel]);
+  }, [strategies, tireDegModel, cliffLap, trackEvolution, config, startFuel]);
 
   // Build chart data
   const chartData = useMemo(() => {

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useApi } from '../hooks/useApi';
 import { getDriverStandings, getConstructorStandings, getSchedule, getLastRaceResult } from '../services/jolpica';
 import { getLatestSession } from '../services/openf1';
 import { getTeamColor } from '../data/constants';
-import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle, Clock } from 'lucide-react';
+import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle } from 'lucide-react';
 
 /* ─── Shared UI Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style, glow }) => (

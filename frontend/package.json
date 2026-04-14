@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "F1 Strategy & Analytics Hub - Live telemetry, race strategy simulation, and historical analytics powered by OpenF1 & Jolpica APIs",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://rifatibnalam.github.io/f1-strategy-hub",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

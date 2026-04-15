@@ -335,7 +335,7 @@ export default function App() {
               <span>FastF1 Python</span>
             </div>
             <a
-              href="https://github.com"
+              href="https://github.com/RifatIbnAlam/f1-strategy-hub"
               target="_blank"
               rel="noopener noreferrer"
               style={{

@@ -419,7 +419,6 @@ function NationalityGrid({ champions }) {
     Austrian: '#EF3340', Australian: '#00843D', Italian: '#009246',
     Spanish: '#AA151B', Dutch: '#FF6F00', American: '#3C3B6E',
     'South African': '#007A4D', Canadian: '#FF0000', 'New Zealander': '#2B7A0B',
-    French: '#002395',
   };
 
   const total = counts.reduce((a, c) => a + c.count, 0);

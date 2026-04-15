@@ -4,6 +4,7 @@ import { getDriverStandings, getConstructorStandings, getSchedule, getLastRaceRe
 import { getLatestSession } from '../services/openf1';
 import { getTeamColor } from '../data/constants';
 import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle } from 'lucide-react';
+import { getFlag } from '../data/flags';
 
 /* ─── Shared UI Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style, glow }) => (
@@ -64,7 +65,7 @@ const StatCard = ({ label, value, icon: Icon, color = '#e10600', sub }) => (
 );
 
 /* ─── Standing Row ─────────────────────────────────────────────────────────── */
-const StandingRow = ({ position, name, points, team, color, isFirst }) => (
+const StandingRow = ({ position, name, points, team, color, isFirst, nationality }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '10px 12px',
@@ -87,7 +88,10 @@ const StandingRow = ({ position, name, points, team, color, isFirst }) => (
       {position}
     </span>
     <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+        {nationality && <span style={{ marginRight: 6 }}>{getFlag(nationality)}</span>}
+        {name}
+      </div>
       <div style={{ fontSize: 11, color: 'var(--text-soft)' }}>{team}</div>
     </div>
     <span style={{
@@ -256,6 +260,7 @@ export default function Dashboard() {
                   points={d.points}
                   color={getTeamColor(d.Constructors?.[0]?.name)}
                   isFirst={i === 0}
+                  nationality={d.Driver?.nationality}
                 />
               ))}
             </div>
@@ -352,6 +357,7 @@ export default function Dashboard() {
                   </span>
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      {r.Driver?.nationality && <span style={{ marginRight: 6 }}>{getFlag(r.Driver.nationality)}</span>}
                       {r.Driver?.givenName} {r.Driver?.familyName}
                     </span>
                   </div>

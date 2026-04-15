@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { getFlag } from './data/flags';
 
 /* ─── Team / Constructor Color Map ────────────────────────────────────────── */
 const CHAMPION_TEAM_COLORS = {
@@ -122,7 +123,8 @@ function DominanceTimeline({ champions, mode }) {
             border: `1px solid ${hoveredColor}44`,
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{hoveredData.year}</span>
-            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>{hoveredData.champion}</span>
+            <span style={{ fontSize: 14, marginLeft: 8 }}>{getFlag(hoveredData.nationality)}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>{hoveredData.champion}</span>
             {hoveredData.team && (
               <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{hoveredData.team}</span>
             )}
@@ -267,7 +269,7 @@ function EraSection({ champions }) {
                             fontFamily: "'JetBrains Mono', monospace",
                             fontWeight: 600, color, marginRight: 6, fontSize: 10,
                           }}>{c.year}</span>
-                          {c.champion}
+                          {getFlag(c.nationality)}{' '}{c.champion}
                         </div>
                       );
                     })}
@@ -451,6 +453,9 @@ function NationalityGrid({ champions }) {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               title={`${c.name}: ${c.count} title${c.count !== 1 ? 's' : ''}`}
             >
+              <span style={{ fontSize: size > 80 ? 20 : 14, lineHeight: 1 }}>
+                {getFlag(c.name)}
+              </span>
               <span style={{
                 fontSize: size > 80 ? 22 : 15, fontWeight: 800,
                 color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace",

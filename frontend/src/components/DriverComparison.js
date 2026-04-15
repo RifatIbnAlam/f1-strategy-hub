@@ -7,6 +7,7 @@ import { useApi } from '../hooks/useApi';
 import { getDriverStandings, getRaceResults } from '../services/jolpica';
 import { getTeamColor } from '../data/constants';
 import { GitCompare, Search, Loader, Trophy, Flag, Award, TrendingUp } from 'lucide-react';
+import { getFlag } from '../data/flags';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -35,7 +36,7 @@ const DriverSelector = ({ drivers, selected, onSelect, label, color }) => (
       <option value="">Select a driver...</option>
       {drivers.map(d => (
         <option key={d.Driver.driverId} value={d.Driver.driverId}>
-          {d.Driver.givenName} {d.Driver.familyName} — {d.Constructors?.[0]?.name}
+          {getFlag(d.Driver.nationality)} {d.Driver.givenName} {d.Driver.familyName} — {d.Constructors?.[0]?.name}
         </option>
       ))}
     </select>
@@ -189,6 +190,7 @@ export default function DriverComparison() {
             }}>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: color1 }}>
+                  <span style={{ marginRight: 6 }}>{getFlag(driver1.Driver.nationality)}</span>
                   {driver1.Driver.givenName} {driver1.Driver.familyName}
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver1.Constructors?.[0]?.name}</div>
@@ -196,6 +198,7 @@ export default function DriverComparison() {
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: color2 }}>
                   {driver2.Driver.givenName} {driver2.Driver.familyName}
+                  <span style={{ marginLeft: 6 }}>{getFlag(driver2.Driver.nationality)}</span>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver2.Constructors?.[0]?.name}</div>
               </div>

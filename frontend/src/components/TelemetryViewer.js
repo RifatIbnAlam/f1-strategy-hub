@@ -8,6 +8,7 @@ import { getSessions, getDrivers, getLaps, getStints } from '../services/openf1'
 import { getDriverColor } from '../data/constants';
 import { TIRE_COMPOUNDS } from '../data/constants';
 import { Activity, Loader, Radio, Gauge } from 'lucide-react';
+import { getFlag } from '../data/flags';
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -249,7 +250,7 @@ export default function TelemetryViewer() {
                 <option value="">Select a driver...</option>
                 {uniqueDrivers.map(d => (
                   <option key={d.driver_number} value={d.driver_number}>
-                    #{d.driver_number} {d.full_name} ({d.team_name})
+                    {getFlag(d.country_code)} #{d.driver_number} {d.full_name} ({d.team_name})
                   </option>
                 ))}
               </select>

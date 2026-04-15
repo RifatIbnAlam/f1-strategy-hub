@@ -1,3 +1,76 @@
+// ─── Team color mapping for championship visualization ─────────────────────
+export const CHAMPION_TEAM_COLORS = {
+  'Alfa Romeo': '#900000',
+  'Ferrari': '#E8002D',
+  'Maserati': '#8B0000',
+  'Maserati / Mercedes': '#8B0000',
+  'Mercedes': '#27F4D2',
+  'Cooper-Climax': '#006633',
+  'BRM': '#004225',
+  'Lotus-Climax': '#DAA520',
+  'Lotus-Ford': '#DAA520',
+  'Brabham-Repco': '#006847',
+  'Matra-Ford': '#002395',
+  'Tyrrell-Ford': '#003DA5',
+  'McLaren-Ford': '#FF8000',
+  'McLaren-TAG': '#FF8000',
+  'McLaren-Honda': '#FF8000',
+  'McLaren-Mercedes': '#FF8000',
+  'McLaren': '#FF8000',
+  'Williams-Ford': '#1868DB',
+  'Williams-Honda': '#1868DB',
+  'Williams-Renault': '#1868DB',
+  'Brabham-Ford': '#006847',
+  'Brabham-BMW': '#006847',
+  'Renault': '#FFD700',
+  'Benetton-Ford': '#00B140',
+  'Benetton-Renault': '#00B140',
+  'Red Bull-Renault': '#3671C6',
+  'Red Bull-Honda': '#3671C6',
+  'Red Bull Racing': '#3671C6',
+  'Brawn-Mercedes': '#C8F000',
+  'Vanwall': '#006633',
+};
+
+// ─── F1 Eras ───────────────────────────────────────────────────────────────────
+export const F1_ERAS = [
+  { id: 'pioneer', name: 'Pioneer Era', years: [1950, 1960], color: '#CD853F',
+    description: 'Front-engine cars, minimal safety, gentlemen racers. Dominated by Fangio\'s genius.' },
+  { id: 'revolution', name: 'The Revolution', years: [1961, 1970], color: '#DAA520',
+    description: 'Rear-engine revolution, aero innovation, wings appear. Jim Clark\'s brilliance, tragic losses.' },
+  { id: 'garagiste', name: 'Garagiste & Ground Effect', years: [1971, 1982], color: '#228B22',
+    description: 'British constructors dominate. Ground effect, turbo era begins. Stewart, Lauda, and Fittipaldi shine.' },
+  { id: 'turbo', name: 'Turbo Era', years: [1983, 1993], color: '#9400D3',
+    description: 'Turbocharged monsters, tech war. Senna vs Prost — the greatest rivalry. Active suspension, traction control.' },
+  { id: 'schumacher', name: 'Schumacher Era', years: [1994, 2008], color: '#E8002D',
+    description: 'Michael rewrites every record. Ferrari\'s unstoppable dynasty. Alonso and Hamilton emerge.' },
+  { id: 'hybrid-dawn', name: 'Red Bull & Hybrid Dawn', years: [2009, 2016], color: '#3671C6',
+    description: 'Vettel\'s four-peat, then Mercedes\' hybrid dominance begins. Hamilton vs Rosberg.' },
+  { id: 'hamilton', name: 'Hamilton Era', years: [2017, 2021], color: '#27F4D2',
+    description: 'Hamilton matches Schumacher\'s 7 titles. Mercedes unprecedented dominance. 2021 — the greatest season finale ever.' },
+  { id: 'modern', name: 'Ground Effect Returns', years: [2022, 2026], color: '#FF8000',
+    description: 'New regulations, Verstappen\'s dominance, McLaren\'s resurgence. A new era unfolds.' },
+];
+
+// ─── Records & milestones ──────────────────────────────────────────────────────
+export const RECORDS = {
+  drivers: [
+    { label: 'Most Titles', value: '7', holders: 'Lewis Hamilton, Michael Schumacher', icon: 'trophy' },
+    { label: 'Most Consecutive', value: '4', holders: 'Sebastian Vettel (2010–2013), Max Verstappen (2021–2024)', icon: 'flame' },
+    { label: 'Youngest Champion', value: '23y 134d', holders: 'Sebastian Vettel (2010)', icon: 'zap' },
+    { label: 'Oldest Champion', value: '46y 41d', holders: 'Juan Manuel Fangio (1957)', icon: 'clock' },
+    { label: 'Closest Title Fight', value: '0 pts', holders: '2008 — Hamilton beat Massa on countback in the final corner', icon: 'target' },
+    { label: 'First Posthumous Champion', value: '1970', holders: 'Jochen Rindt — won title after fatal crash at Monza', icon: 'star' },
+  ],
+  constructors: [
+    { label: 'Most Titles', value: '16', holders: 'Ferrari', icon: 'trophy' },
+    { label: 'Most Consecutive', value: '8', holders: 'Mercedes (2014–2021)', icon: 'flame' },
+    { label: 'Longest Active Streak', value: '75 years', holders: 'Ferrari — every season since 1950', icon: 'calendar' },
+    { label: 'Only Race-Winner Champion', value: '2009', holders: 'Brawn GP — won title in their only season', icon: 'star' },
+  ],
+};
+
+// ─── Driver Champions ──────────────────────────────────────────────────────────
 export const DRIVER_CHAMPIONS = [
   { year: 1950, champion: 'Nino Farina', nationality: 'Italian', team: 'Alfa Romeo' },
   { year: 1951, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Alfa Romeo' },
@@ -74,8 +147,10 @@ export const DRIVER_CHAMPIONS = [
   { year: 2022, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
   { year: 2023, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
   { year: 2024, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
+  { year: 2025, champion: 'Lando Norris', nationality: 'British', team: 'McLaren' }
 ];
 
+// ─── Constructor Champions ─────────────────────────────────────────────────────
 export const CONSTRUCTOR_CHAMPIONS = [
   { year: 1958, champion: 'Vanwall', nationality: 'British' },
   { year: 1959, champion: 'Cooper-Climax', nationality: 'British' },
@@ -144,4 +219,5 @@ export const CONSTRUCTOR_CHAMPIONS = [
   { year: 2022, champion: 'Red Bull Racing', nationality: 'Austrian' },
   { year: 2023, champion: 'Red Bull Racing', nationality: 'Austrian' },
   { year: 2024, champion: 'McLaren', nationality: 'British' },
+  { year: 2025, champion: 'McLaren', nationality: 'British' }
 ];

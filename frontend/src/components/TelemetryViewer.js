@@ -11,8 +11,8 @@ import { Activity, Loader, Radio, Gauge } from 'lucide-react';
 
 const Card = ({ children, style }) => (
   <div style={{
-    background: 'linear-gradient(135deg, #13132b 0%, #1a1a2e 100%)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: 'var(--panel-bg)',
+    border: '1px solid var(--panel-border)',
     borderRadius: 12, padding: 24, ...style,
   }}>{children}</div>
 );
@@ -29,13 +29,13 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
     <div style={{ maxHeight: 400, overflowY: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
-          <tr style={{ borderBottom: '1px solid #222' }}>
+          <tr style={{ borderBottom: '1px solid var(--panel-border)' }}>
             {['Lap', 'Time', 'S1', 'S2', 'S3', 'Compound'].map(h => (
               <th key={h} style={{
                 padding: '8px 6px', fontSize: 10, fontWeight: 600,
-                color: '#666', textAlign: 'left', textTransform: 'uppercase',
+                color: 'var(--text-soft)', textAlign: 'left', textTransform: 'uppercase',
                 letterSpacing: '0.5px', position: 'sticky', top: 0,
-                background: '#13132b',
+                background: 'var(--panel-solid)',
               }}>{h}</th>
             ))}
           </tr>
@@ -51,11 +51,11 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
 
             return (
               <tr key={i} style={{
-                borderBottom: '1px solid #1a1a2e',
+                borderBottom: '1px solid var(--app-bg-alt)',
                 background: isBest ? 'rgba(147, 51, 234, 0.1)' : 'transparent',
               }}>
                 <td style={{
-                  padding: '6px', fontSize: 12, fontWeight: 600, color: '#fff',
+                  padding: '6px', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
                   fontFamily: "'JetBrains Mono', monospace",
                 }}>
                   {lap.lap_number}
@@ -63,13 +63,13 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
                 <td style={{
                   padding: '6px', fontSize: 12,
                   fontFamily: "'JetBrains Mono', monospace",
-                  color: isBest ? '#a855f7' : '#fff',
+                  color: isBest ? '#a855f7' : 'var(--text-primary)',
                   fontWeight: isBest ? 700 : 400,
                 }}>
                   {formatTime(lap.lap_duration)}
                   {isBest && <span style={{ marginLeft: 4, fontSize: 10, color: '#a855f7' }}>BEST</span>}
                 </td>
-                <td style={{ padding: '6px', fontSize: 12, color: '#aaa', fontFamily: "'JetBrains Mono', monospace" }}>
+                <td style={{ padding: '6px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                   {formatTime(lap.duration_sector_1)}
                 </td>
                 <td style={{ padding: '6px', fontSize: 12, color: '#aaa', fontFamily: "'JetBrains Mono', monospace" }}>
@@ -200,34 +200,34 @@ export default function TelemetryViewer() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <Activity size={28} color="#e10600" />
           Telemetry Viewer
         </h1>
-        <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
           Live lap times, sector data, and tire strategies from OpenF1
         </p>
       </div>
 
       {/* Session Selector */}
       <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>YEAR</label>
             <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSelectedSession(null); setSelectedDriver(null); }}
-              style={{ width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6, color: '#fff', padding: '8px 12px', fontSize: 13 }}>
+              style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               {[2026, 2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div>
             <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>SESSION</label>
             {sessionsLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#666', padding: 8, fontSize: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-soft)', padding: 8, fontSize: 12 }}>
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading sessions...
               </div>
             ) : (
               <select value={selectedSession || ''} onChange={e => { setSelectedSession(e.target.value); setSelectedDriver(null); }}
-                style={{ width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6, color: '#fff', padding: '8px 12px', fontSize: 13 }}>
+                style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
                 <option value="">Select a race...</option>
                 {sessionOptions.map(s => (
                   <option key={s.session_key} value={s.session_key}>
@@ -240,12 +240,12 @@ export default function TelemetryViewer() {
           <div>
             <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER</label>
             {driversLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#666', padding: 8, fontSize: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-soft)', padding: 8, fontSize: 12 }}>
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
               </div>
             ) : (
               <select value={selectedDriver || ''} onChange={e => setSelectedDriver(parseInt(e.target.value))}
-                style={{ width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6, color: '#fff', padding: '8px 12px', fontSize: 13 }}>
+                style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
                 <option value="">Select a driver...</option>
                 {uniqueDrivers.map(d => (
                   <option key={d.driver_number} value={d.driver_number}>
@@ -262,13 +262,13 @@ export default function TelemetryViewer() {
       {lapsLoading ? (
         <Card style={{ textAlign: 'center', padding: 60 }}>
           <Loader size={32} color="#e10600" style={{ animation: 'pulse 1s infinite', marginBottom: 16 }} />
-          <div style={{ color: '#888', fontSize: 14 }}>Fetching telemetry data from OpenF1...</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Fetching telemetry data from OpenF1...</div>
         </Card>
       ) : laps && laps.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
           {/* Lap Time Chart */}
-          <Card style={{ gridColumn: 'span 2' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+          <Card style={{ gridColumn: '1 / -1' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Lap Time Progression
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -352,8 +352,8 @@ export default function TelemetryViewer() {
           </Card>
 
           {/* Lap Time Table */}
-          <Card style={{ gridColumn: 'span 2' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+          <Card style={{ gridColumn: '1 / -1' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Detailed Lap Times
             </h3>
             <LapTimeTable laps={laps} stints={stints} driverColor={driverColor} />
@@ -362,14 +362,14 @@ export default function TelemetryViewer() {
       ) : selectedSession && selectedDriver ? (
         <Card style={{ textAlign: 'center', padding: 60 }}>
           <Radio size={48} color="#333" style={{ marginBottom: 16 }} />
-          <div style={{ color: '#555', fontSize: 14 }}>No lap data available for this selection</div>
-          <div style={{ color: '#444', fontSize: 12, marginTop: 4 }}>Try a different session or driver</div>
+          <div style={{ color: 'var(--text-soft)', fontSize: 14 }}>No lap data available for this selection</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>Try a different session or driver</div>
         </Card>
       ) : (
         <Card style={{ textAlign: 'center', padding: 60 }}>
           <Gauge size={48} color="#333" style={{ marginBottom: 16 }} />
-          <div style={{ color: '#555', fontSize: 16, fontWeight: 600 }}>Select a session and driver</div>
-          <div style={{ color: '#444', fontSize: 12, marginTop: 4 }}>
+          <div style={{ color: 'var(--text-soft)', fontSize: 16, fontWeight: 600 }}>Select a session and driver</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>
             Choose a race and driver above to view telemetry data
           </div>
         </Card>

@@ -50,8 +50,8 @@ const CIRCUIT_PRESETS = {
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
   <div style={{
-    background: 'linear-gradient(135deg, #13132b 0%, #1a1a2e 100%)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: 'var(--panel-bg)',
+    border: '1px solid var(--panel-border)',
     borderRadius: 12,
     padding: 24,
     ...style,
@@ -77,7 +77,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
       value={stint.compound}
       onChange={e => onUpdate(index, 'compound', e.target.value)}
       style={{
-        background: '#0a0a12', border: '1px solid #333', borderRadius: 6,
+        background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
         color: TIRE_COMPOUNDS[stint.compound].color,
         padding: '6px 10px', fontSize: 12, fontWeight: 600,
         fontFamily: "'JetBrains Mono', monospace",
@@ -267,13 +267,13 @@ export default function StrategySimulator() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{
-          fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: '-1px',
+        fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
           <Timer size={28} color="#e10600" />
           Race Strategy Simulator
         </h1>
-        <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
           Model tire degradation, pit windows, and race pace to find the optimal strategy
         </p>
       </div>
@@ -282,14 +282,14 @@ export default function StrategySimulator() {
       <Card style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <Settings size={16} color="#e10600" />
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Simulation Parameters</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Simulation Parameters</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 11, color: '#888', marginBottom: 6, display: 'block' }}>CIRCUIT</label>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>CIRCUIT</label>
             <select value={circuit} onChange={e => setCircuit(e.target.value)} style={{
-              width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6,
-              color: '#fff', padding: '8px 12px', fontSize: 13, fontFamily: "'JetBrains Mono', monospace",
+              width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
+              color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13, fontFamily: "'JetBrains Mono', monospace",
             }}>
               {Object.entries(CIRCUIT_PRESETS).map(([k, v]) => (
                 <option key={k} value={k}>{v.name} ({v.totalLaps} laps)</option>
@@ -297,10 +297,10 @@ export default function StrategySimulator() {
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: '#888', marginBottom: 6, display: 'block' }}>TIRE MODEL</label>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>TIRE MODEL</label>
             <select value={tireDegModel} onChange={e => setTireDegModel(e.target.value)} style={{
-              width: '100%', background: '#0a0a12', border: '1px solid #333', borderRadius: 6,
-              color: '#fff', padding: '8px 12px', fontSize: 13,
+              width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
+              color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
             }}>
               <option value="linear">Linear Degradation</option>
               <option value="cliff">Cliff Degradation</option>
@@ -308,7 +308,7 @@ export default function StrategySimulator() {
           </div>
           {tireDegModel === 'cliff' && (
             <div>
-              <label style={{ fontSize: 11, color: '#888', marginBottom: 6, display: 'block' }}>
+              <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>
                 CLIFF LAP: {cliffLap}
               </label>
               <input type="range" min={8} max={35} value={cliffLap}
@@ -318,7 +318,7 @@ export default function StrategySimulator() {
             </div>
           )}
           <div>
-            <label style={{ fontSize: 11, color: '#888', marginBottom: 6, display: 'block' }}>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>
               TRACK EVOLUTION: {trackEvolution.toFixed(3)}s/lap
             </label>
             <input type="range" min={-30} max={0} value={trackEvolution * 1000}
@@ -330,7 +330,7 @@ export default function StrategySimulator() {
       </Card>
 
       {/* Strategy Builders */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
         {strategies.map((strat, si) => {
           const totalStintLaps = strat.stints.reduce((a, s) => a + s.laps, 0);
           const lapsOff = totalStintLaps !== config.totalLaps;
@@ -340,7 +340,7 @@ export default function StrategySimulator() {
                 <div>
                   <span style={{ fontSize: 16, fontWeight: 700, color: strat.color }}>{strat.name}</span>
                   <span style={{
-                    fontSize: 11, color: '#666', marginLeft: 8,
+                    fontSize: 11, color: 'var(--text-soft)', marginLeft: 8,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     {strat.stints.length - 1} stop{strat.stints.length > 2 ? 's' : ''}
@@ -382,9 +382,9 @@ export default function StrategySimulator() {
                 {strat.stints.length < 4 && (
                   <button onClick={() => addStint(si)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    padding: '8px 16px', background: 'rgba(255,255,255,0.05)',
-                    border: '1px dashed #333', borderRadius: 8,
-                    color: '#888', fontSize: 12, cursor: 'pointer',
+                    padding: '8px 16px', background: 'var(--surface-hover)',
+                    border: '1px dashed var(--input-border)', borderRadius: 8,
+                    color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
                     transition: 'all 0.2s ease',
                   }}>
                     <Plus size={14} /> Add Pit Stop
@@ -400,16 +400,16 @@ export default function StrategySimulator() {
       {simData.length >= 2 && (
         <Card style={{
           marginBottom: 24,
-          background: `linear-gradient(135deg, ${simData[winner].color}10, #1a1a2e)`,
+          background: `linear-gradient(135deg, ${simData[winner].color}10, var(--app-bg-alt))`,
           borderLeft: `4px solid ${simData[winner].color}`,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Zap size={24} color={simData[winner].color} />
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
                 {simData[winner].name} wins by {timeDiff}s
               </div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                 Total race time: {Math.floor(simData[winner].totalTime / 60)}m {(simData[winner].totalTime % 60).toFixed(1)}s
                 &middot; {simData[winner].pitStops} pit stop{simData[winner].pitStops !== 1 ? 's' : ''}
               </div>
@@ -419,20 +419,20 @@ export default function StrategySimulator() {
       )}
 
       {/* Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         {/* Lap Time Chart */}
         <Card>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
             Lap Time Comparison
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-              <XAxis dataKey="lap" stroke="#555" fontSize={11} />
-              <YAxis stroke="#555" fontSize={11} domain={['auto', 'auto']}
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
+              <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
+              <YAxis stroke="var(--text-soft)" fontSize={11} domain={['auto', 'auto']}
                 tickFormatter={v => `${v.toFixed(1)}s`} />
               <Tooltip
-                contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
                 labelFormatter={l => `Lap ${l}`}
                 formatter={(v, name) => [`${v.toFixed(3)}s`, name.includes('_0') ? strategies[0].name : strategies[1].name]}
               />
@@ -453,16 +453,16 @@ export default function StrategySimulator() {
 
         {/* Gap Chart */}
         <Card>
-          <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
             Gap Between Strategies
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={gapData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-              <XAxis dataKey="lap" stroke="#555" fontSize={11} />
-              <YAxis stroke="#555" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
+              <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
+              <YAxis stroke="var(--text-soft)" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
               <Tooltip
-                contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
                 labelFormatter={l => `Lap ${l}`}
                 formatter={(v) => [`${v > 0 ? '+' : ''}${v.toFixed(3)}s`, 'B vs A Gap']}
               />

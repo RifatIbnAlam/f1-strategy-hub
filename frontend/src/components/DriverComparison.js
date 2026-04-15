@@ -11,8 +11,8 @@ import { GitCompare, Search, Loader, Trophy, Flag, Award, TrendingUp } from 'luc
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
   <div style={{
-    background: 'linear-gradient(135deg, #13132b 0%, #1a1a2e 100%)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: 'var(--panel-bg)',
+    border: '1px solid var(--panel-border)',
     borderRadius: 12, padding: 24, ...style,
   }}>{children}</div>
 );
@@ -27,8 +27,8 @@ const DriverSelector = ({ drivers, selected, onSelect, label, color }) => (
       value={selected}
       onChange={e => onSelect(e.target.value)}
       style={{
-        width: '100%', background: '#0a0a12', border: `1px solid ${color}44`,
-        borderRadius: 8, color: '#fff', padding: '10px 14px', fontSize: 14,
+        width: '100%', background: 'var(--input-bg)', border: `1px solid ${color}44`,
+        borderRadius: 8, color: 'var(--text-primary)', padding: '10px 14px', fontSize: 14,
         fontFamily: "'Inter', sans-serif", cursor: 'pointer',
       }}
     >
@@ -135,11 +135,11 @@ export default function DriverComparison() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
           <GitCompare size={28} color="#e10600" />
           Driver Comparison
         </h1>
-        <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
           Head-to-head analysis with live championship data
         </p>
       </div>
@@ -147,11 +147,11 @@ export default function DriverComparison() {
       {/* Driver Selectors */}
       <Card style={{ marginBottom: 24 }}>
         {loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#888' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)' }}>
             <Loader size={16} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 24, alignItems: 'end' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, alignItems: 'end' }}>
             <DriverSelector
               drivers={standings || []}
               selected={driver1Id}
@@ -181,7 +181,7 @@ export default function DriverComparison() {
 
       {/* Comparison Content */}
       {driver1 && driver2 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
           {/* Stats Comparison */}
           <Card>
             <div style={{
@@ -191,13 +191,13 @@ export default function DriverComparison() {
                 <div style={{ fontSize: 20, fontWeight: 800, color: color1 }}>
                   {driver1.Driver.givenName} {driver1.Driver.familyName}
                 </div>
-                <div style={{ fontSize: 12, color: '#666' }}>{driver1.Constructors?.[0]?.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver1.Constructors?.[0]?.name}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: color2 }}>
                   {driver2.Driver.givenName} {driver2.Driver.familyName}
                 </div>
-                <div style={{ fontSize: 12, color: '#666' }}>{driver2.Constructors?.[0]?.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver2.Constructors?.[0]?.name}</div>
               </div>
             </div>
 
@@ -229,8 +229,8 @@ export default function DriverComparison() {
           </Card>
 
           {/* Race by Race Positions */}
-          <Card style={{ gridColumn: 'span 2' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+          <Card style={{ gridColumn: '1 / -1' }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Race-by-Race Finishing Positions
             </h3>
             <ResponsiveContainer width="100%" height={300}>
@@ -238,7 +238,7 @@ export default function DriverComparison() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#222" />
                 <XAxis dataKey="race" stroke="#555" fontSize={10} angle={-30} textAnchor="end" height={60} />
                 <YAxis stroke="#555" fontSize={11} reversed domain={[1, 20]} label={{ value: 'Position', angle: -90, position: 'insideLeft', fill: '#555', fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 8, fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }} />
                 <Bar dataKey={driver1.Driver.familyName} fill={color1} radius={[4, 4, 0, 0]} />
                 <Bar dataKey={driver2.Driver.familyName} fill={color2} radius={[4, 4, 0, 0]} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -249,8 +249,8 @@ export default function DriverComparison() {
       ) : (
         <Card style={{ textAlign: 'center', padding: 60 }}>
           <Search size={48} color="#333" style={{ marginBottom: 16 }} />
-          <div style={{ fontSize: 16, color: '#555', fontWeight: 600 }}>Select two drivers to compare</div>
-          <div style={{ fontSize: 12, color: '#444', marginTop: 4 }}>
+          <div style={{ fontSize: 16, color: 'var(--text-soft)', fontWeight: 600 }}>Select two drivers to compare</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
             Choose from the current championship standings above
           </div>
         </Card>

@@ -8,8 +8,8 @@ import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle } from '
 /* ─── Shared UI Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style, glow }) => (
   <div style={{
-    background: 'linear-gradient(135deg, #13132b 0%, #1a1a2e 100%)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: 'var(--panel-bg)',
+    border: '1px solid var(--panel-border)',
     borderRadius: 12,
     padding: 24,
     animation: 'fadeIn 0.5s ease',
@@ -24,14 +24,14 @@ const SectionTitle = ({ icon: Icon, title, subtitle }) => (
   <div style={{ marginBottom: 20 }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
       {Icon && <Icon size={18} color="#e10600" />}
-      <h2 style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>{title}</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>{title}</h2>
     </div>
-    {subtitle && <p style={{ fontSize: 12, color: '#666', marginLeft: Icon ? 28 : 0 }}>{subtitle}</p>}
+    {subtitle && <p style={{ fontSize: 12, color: 'var(--text-soft)', marginLeft: Icon ? 28 : 0 }}>{subtitle}</p>}
   </div>
 );
 
 const LoadingSpinner = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#888', padding: 20 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', padding: 20 }}>
     <Loader size={16} style={{ animation: 'pulse 1s infinite' }} />
     <span style={{ fontSize: 13 }}>Loading live data...</span>
   </div>
@@ -53,10 +53,10 @@ const StatCard = ({ label, value, icon: Icon, color = '#e10600', sub }) => (
       background: `radial-gradient(circle, ${color}15, transparent)`,
     }} />
     <Icon size={24} color={color} style={{ marginBottom: 8 }} />
-    <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
       {value}
     </div>
-    <div style={{ fontSize: 11, color: '#888', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
+    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
       {label}
     </div>
     {sub && <div style={{ fontSize: 11, color, marginTop: 4 }}>{sub}</div>}
@@ -74,7 +74,7 @@ const StandingRow = ({ position, name, points, team, color, isFirst }) => (
     transition: 'background 0.2s ease',
     cursor: 'default',
   }}
-    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
     onMouseLeave={e => e.currentTarget.style.background = isFirst ? 'rgba(225, 6, 0, 0.08)' : 'transparent'}
   >
     <span style={{
@@ -87,15 +87,15 @@ const StandingRow = ({ position, name, points, team, color, isFirst }) => (
       {position}
     </span>
     <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{name}</div>
-      <div style={{ fontSize: 11, color: '#666' }}>{team}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-soft)' }}>{team}</div>
     </div>
     <span style={{
-      fontSize: 16, fontWeight: 700, color: '#fff',
+      fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
       fontFamily: "'JetBrains Mono', monospace",
     }}>
       {points}
-      <span style={{ fontSize: 10, color: '#666', marginLeft: 4 }}>PTS</span>
+      <span style={{ fontSize: 10, color: 'var(--text-soft)', marginLeft: 4 }}>PTS</span>
     </span>
   </div>
 );
@@ -113,23 +113,23 @@ const RaceItem = ({ race, isPast }) => {
     }}>
       <div style={{
         width: 44, height: 44,
-        background: isPast ? '#1a1a2e' : 'rgba(225, 6, 0, 0.1)',
+        background: isPast ? 'var(--app-bg-alt)' : 'var(--accent-soft)',
         borderRadius: 8,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        border: isPast ? '1px solid #222' : '1px solid rgba(225, 6, 0, 0.3)',
+        border: isPast ? '1px solid var(--panel-border)' : '1px solid var(--accent-border)',
       }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? '#555' : '#fff', fontFamily: "'JetBrains Mono', monospace" }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? 'var(--text-soft)' : 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
           {date.getDate()}
         </span>
-        <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? '#444' : '#e10600', letterSpacing: '1px' }}>
+        <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--accent)', letterSpacing: '1px' }}>
           {monthNames[date.getMonth()]}
         </span>
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: isPast ? '#666' : '#fff' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: isPast ? 'var(--text-soft)' : 'var(--text-primary)' }}>
           {race.raceName}
         </div>
-        <div style={{ fontSize: 11, color: '#555' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
           {race.Circuit?.circuitName}
         </div>
       </div>
@@ -137,8 +137,8 @@ const RaceItem = ({ race, isPast }) => {
         fontSize: 10, fontWeight: 600,
         padding: '3px 8px',
         borderRadius: 4,
-        background: isPast ? '#1a1a2e' : 'rgba(225, 6, 0, 0.1)',
-        color: isPast ? '#555' : '#e10600',
+        background: isPast ? 'var(--app-bg-alt)' : 'var(--accent-soft)',
+        color: isPast ? 'var(--text-soft)' : 'var(--accent)',
       }}>
         R{race.round}
       </span>
@@ -175,15 +175,15 @@ export default function Dashboard() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{
-          fontSize: 32, fontWeight: 900, color: '#fff',
+          fontSize: 32, fontWeight: 900, color: 'var(--text-primary)',
           letterSpacing: '-1px',
-          background: 'linear-gradient(90deg, #fff 0%, #e10600 100%)',
+          background: 'linear-gradient(90deg, var(--text-primary) 0%, var(--accent) 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}>
           F1 Analytics Dashboard
         </h1>
-        <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
           Live data from the {currentYear} Formula 1 World Championship
         </p>
         {latestSession && (
@@ -199,7 +199,7 @@ export default function Dashboard() {
               background: '#00ff87',
               animation: 'pulse 2s infinite',
             }} />
-            <span style={{ fontSize: 11, color: '#ccc' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
               Latest: {latestSession.session_name} - {latestSession.meeting_name}
             </span>
           </div>
@@ -239,7 +239,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         {/* Driver Standings */}
         <Card glow>
           <SectionTitle icon={TrendingUp} title="Driver Standings" subtitle="Live championship points" />
@@ -295,17 +295,17 @@ export default function Dashboard() {
                     padding: '10px 12px',
                   }}>
                     <span style={{
-                      fontSize: 14, fontWeight: 700, color: '#fff', width: 24,
+                      fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', width: 24,
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
                       {i + 1}
                     </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
                         {c.Constructor?.name}
                       </div>
                       <div style={{
-                        height: 4, background: '#1a1a2e', borderRadius: 2, overflow: 'hidden',
+                        height: 4, background: 'var(--app-bg-alt)', borderRadius: 2, overflow: 'hidden',
                       }}>
                         <div style={{
                           height: '100%', width: `${pct}%`,
@@ -316,7 +316,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <span style={{
-                      fontSize: 15, fontWeight: 700, color: '#fff',
+                      fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
                       {c.points}
@@ -345,17 +345,17 @@ export default function Dashboard() {
                   }`,
                 }}>
                   <span style={{
-                    fontSize: 13, fontWeight: 700, color: '#fff', width: 24,
+                    fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', width: 24,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     P{r.position}
                   </span>
                   <div style={{ flex: 1 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                       {r.Driver?.givenName} {r.Driver?.familyName}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, color: '#888', fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                     {r.Time?.time || r.status}
                   </span>
                   <span style={{

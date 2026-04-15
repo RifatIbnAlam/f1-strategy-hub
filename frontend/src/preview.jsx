@@ -128,8 +128,8 @@ const DRIVER_CHAMPIONS = [
 /* ─── Card ────────────────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
   <div style={{
-    background: 'linear-gradient(135deg, #13132b 0%, #1a1a2e 100%)',
-    border: '1px solid rgba(255,255,255,0.06)',
+    background: 'var(--panel-bg)',
+    border: '1px solid var(--panel-border)',
     borderRadius: 12, padding: 24, ...style,
   }}>{children}</div>
 );
@@ -160,8 +160,8 @@ function DominanceTimeline({ champions }) {
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', margin: 0 }}>Driver Dominance Timeline</h3>
-          <p style={{ fontSize: 11, color: '#666', margin: '4px 0 0' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Driver Dominance Timeline</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-soft)', margin: '4px 0 0' }}>
             Every championship since 1950. Hover to explore — consecutive titles form visible streaks.
           </p>
         </div>
@@ -171,9 +171,9 @@ function DominanceTimeline({ champions }) {
             background: `${CHAMPION_TEAM_COLORS[hoveredData.team] || '#555'}22`,
             border: `1px solid ${CHAMPION_TEAM_COLORS[hoveredData.team] || '#555'}44`,
           }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{hoveredData.year}</span>
-            <span style={{ fontSize: 12, color: '#ccc', marginLeft: 8 }}>{hoveredData.champion}</span>
-            <span style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>{hoveredData.team}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{hoveredData.year}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>{hoveredData.champion}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{hoveredData.team}</span>
           </div>
         )}
       </div>
@@ -234,8 +234,8 @@ function EraSection({ champions }) {
   const [expandedEra, setExpandedEra] = useState(null);
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 4 }}>The Eras of Formula 1</h3>
-      <p style={{ fontSize: 11, color: '#666', marginBottom: 20 }}>75 years of evolution, revolution, and rivalry</p>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>The Eras of Formula 1</h3>
+      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 20 }}>75 years of evolution, revolution, and rivalry</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {F1_ERAS.map(era => {
           const eraChampions = champions.filter(c => c.year >= era.years[0] && c.year <= era.years[1]);
@@ -255,26 +255,26 @@ function EraSection({ champions }) {
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 16px', borderRadius: 10,
-                  background: isExpanded ? `${era.color}15` : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isExpanded ? `${era.color}40` : 'rgba(255,255,255,0.04)'}`,
+                  background: isExpanded ? `${era.color}15` : 'var(--surface-hover)',
+                  border: `1px solid ${isExpanded ? `${era.color}40` : 'var(--panel-border)'}`,
                   cursor: 'pointer', textAlign: 'left', fontFamily: "'Inter', sans-serif",
                 }}>
                 <div style={{ width: 6, height: 36, borderRadius: 3, background: era.color, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     {era.name}
-                    <span style={{ fontSize: 11, color: '#666', fontWeight: 400, marginLeft: 8 }}>{era.years[0]}–{era.years[1]}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 400, marginLeft: 8 }}>{era.years[0]}–{era.years[1]}</span>
                   </div>
-                  <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{era.description}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{era.description}</div>
                 </div>
                 <div style={{ textAlign: 'right', marginRight: 8 }}>
                   <div style={{ fontSize: 16, fontWeight: 800, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>{eraChampions.length}</div>
-                  <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
+                  <div style={{ fontSize: 9, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
                 </div>
               </button>
               {isExpanded && (
                 <div style={{ padding: '12px 16px 12px 34px' }}>
-                  <div style={{ fontSize: 11, color: '#666', marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 8 }}>
                     {[...new Set(eraChampions.map(c => c.champion))].length} unique champions
                     {dominant && <span> · Most dominant: <span style={{ color: dominantColor, fontWeight: 600 }}>{dominant[0]}</span> ({dominant[1]})</span>}
                   </div>
@@ -307,14 +307,14 @@ function EraSection({ champions }) {
 function RecordCards() {
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 4 }}>Records & Milestones</h3>
-      <p style={{ fontSize: 11, color: '#666', marginBottom: 20 }}>The numbers that define F1 greatness</p>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Records & Milestones</h3>
+      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 20 }}>The numbers that define F1 greatness</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {RECORDS.map((r, i) => (
           <div key={i} style={{
             display: 'flex', alignItems: 'flex-start', gap: 12,
             padding: '12px 14px', borderRadius: 10,
-            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)',
+            background: 'var(--surface-hover)', border: '1px solid var(--panel-border)',
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: 8,
@@ -326,10 +326,10 @@ function RecordCards() {
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
-                <span style={{ fontSize: 11, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{r.label}</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>{r.value}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{r.label}</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{r.value}</span>
               </div>
-              <div style={{ fontSize: 11, color: '#777', lineHeight: 1.4 }}>{r.holders}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.holders}</div>
             </div>
           </div>
         ))}
@@ -348,7 +348,7 @@ function TitlesChart({ champions }) {
   const MEDAL = ['#FFD700', '#C0C0C0', '#CD7F32'];
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 16 }}>Drivers by Title Count</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Drivers by Title Count</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {titleCounts.map((item, i) => {
           const pct = (item.count / titleCounts[0].count) * 100;
@@ -361,10 +361,10 @@ function TitlesChart({ champions }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10, fontWeight: 700, color: i < 3 ? '#000' : '#888',
               }}>{i + 1}</span>
-              <div style={{ width: 130, fontSize: 12, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
-              <div style={{ flex: 1, height: 20, background: '#0a0a12', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+              <div style={{ width: 130, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+              <div style={{ flex: 1, height: 20, background: 'var(--app-bg-alt)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
                 <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}CC, ${color}44)`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8 }}>
-                  {pct > 20 && <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>{item.count}</span>}
+                  {pct > 20 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{item.count}</span>}
                 </div>
               </div>
             </div>
@@ -390,7 +390,7 @@ function NationalityGrid({ champions }) {
   const total = counts.reduce((a, c) => a + c.count, 0);
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 16 }}>Championships by Nationality</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Championships by Nationality</h3>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {counts.map(c => {
           const color = NAT_COLORS[c.name] || '#555';
@@ -402,7 +402,7 @@ function NationalityGrid({ champions }) {
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
               padding: 6, cursor: 'default',
             }}>
-              <span style={{ fontSize: size > 80 ? 22 : 16, fontWeight: 800, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>{c.count}</span>
+              <span style={{ fontSize: size > 80 ? 22 : 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{c.count}</span>
               <span style={{ fontSize: 8, color: '#aaa', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>{c.name}</span>
             </div>
           );
@@ -423,23 +423,23 @@ export default function ChampionshipHistoryPreview({ champions = DRIVER_CHAMPION
   const latest = champions[champions.length - 1];
 
   return (
-    <div style={{ background: '#0a0a12', minHeight: '100vh', padding: '24px 32px', color: '#e0e0e0', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{ background: 'transparent', minHeight: '100vh', padding: '0', color: 'var(--text-secondary)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #1a1a2e; }
-        ::-webkit-scrollbar-thumb { background: #e10600; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: var(--app-bg-alt); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
       `}</style>
 
       <div style={{ marginBottom: 8 }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>
+        <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
           Championship History
         </h1>
-        <p style={{ fontSize: 13, color: '#666', marginTop: 4 }}>{champions.length} seasons of the pinnacle of motorsport</p>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>{champions.length} seasons of the pinnacle of motorsport</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, padding: '16px 0', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, padding: '16px 0', marginBottom: 20, borderBottom: '1px solid var(--panel-border)' }}>
         {[
           { label: 'Seasons', value: champions.length, color: '#FFD700' },
           { label: 'Unique Champions', value: titleCounts.length, color: '#e10600' },
@@ -449,8 +449,8 @@ export default function ChampionshipHistoryPreview({ champions = DRIVER_CHAMPION
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center' }} />
             <div>
-              <div style={{ fontSize: 10, color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{s.label}</div>
-              <div style={{ fontSize: typeof s.value === 'number' ? 20 : 13, fontWeight: 800, color: '#fff', fontFamily: typeof s.value === 'number' ? "'JetBrains Mono', monospace" : 'inherit' }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{s.label}</div>
+              <div style={{ fontSize: typeof s.value === 'number' ? 20 : 13, fontWeight: 800, color: 'var(--text-primary)', fontFamily: typeof s.value === 'number' ? "'JetBrains Mono', monospace" : 'inherit' }}>{s.value}</div>
             </div>
           </div>
         ))}
@@ -460,12 +460,12 @@ export default function ChampionshipHistoryPreview({ champions = DRIVER_CHAMPION
         <DominanceTimeline champions={champions} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
         <TitlesChart champions={champions} />
         <RecordCards />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         <EraSection champions={champions} />
         <NationalityGrid champions={champions} />
       </div>

@@ -309,7 +309,7 @@ function RecordCards({ mode }) {
           >
             <div style={{
               width: 36, height: 36, borderRadius: 8,
-              background: 'rgba(225, 6, 0, 0.1)', border: '1px solid rgba(225, 6, 0, 0.2)',
+              background: 'var(--accent-soft)', border: '1px solid var(--accent-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               fontSize: 16,
             }}>

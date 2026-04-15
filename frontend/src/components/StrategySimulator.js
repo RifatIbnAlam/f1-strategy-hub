@@ -109,12 +109,12 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '12px 16px',
-    background: 'rgba(0,0,0,0.2)',
+    background: 'var(--surface-hover)',
     borderRadius: 8,
     borderLeft: `4px solid ${TIRE_COMPOUNDS[stint.compound].color}`,
   }}>
     <span style={{
-      fontSize: 11, fontWeight: 700, color: '#888',
+      fontSize: 11, fontWeight: 700, color: 'var(--text-muted)',
       fontFamily: "'JetBrains Mono', monospace",
     }}>
       S{index + 1}
@@ -135,7 +135,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
       ))}
     </select>
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 11, color: '#666' }}>Laps:</span>
+      <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>Laps:</span>
       <input
         type="range"
         min={1}
@@ -145,7 +145,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
         style={{ flex: 1, accentColor: TIRE_COMPOUNDS[stint.compound].color }}
       />
       <span style={{
-        fontSize: 13, fontWeight: 600, color: '#fff', width: 30, textAlign: 'right',
+        fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', width: 30, textAlign: 'right',
         fontFamily: "'JetBrains Mono', monospace",
       }}>
         {stint.laps}
@@ -153,7 +153,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
     </div>
     {index > 0 && (
       <button onClick={() => onRemove(index)} style={{
-        background: 'none', border: 'none', cursor: 'pointer', color: '#e10600', padding: 4,
+        background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4,
       }}>
         <Trash2 size={14} />
       </button>
@@ -316,7 +316,7 @@ export default function StrategySimulator() {
         fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <Timer size={28} color="#e10600" />
+          <Timer size={28} color="var(--accent)" />
           Race Strategy Simulator
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
@@ -327,7 +327,7 @@ export default function StrategySimulator() {
       {/* Circuit + Physics Config */}
       <Card style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <Settings size={16} color="#e10600" />
+          <Settings size={16} color="var(--accent)" />
           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Simulation Parameters</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
@@ -359,7 +359,7 @@ export default function StrategySimulator() {
               </label>
               <input type="range" min={8} max={35} value={cliffLap}
                 onChange={e => setCliffLap(parseInt(e.target.value))}
-                style={{ width: '100%', accentColor: '#e10600' }}
+                style={{ width: '100%', accentColor: 'var(--accent)' }}
               />
             </div>
           )}
@@ -394,7 +394,7 @@ export default function StrategySimulator() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   {lapsOff && (
-                    <span style={{ fontSize: 11, color: '#e10600', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <AlertTriangle size={12} />
                       {totalStintLaps}/{config.totalLaps} laps
                     </span>
@@ -512,7 +512,7 @@ export default function StrategySimulator() {
                 labelFormatter={l => `Lap ${l}`}
                 formatter={(v) => [`${v > 0 ? '+' : ''}${v.toFixed(3)}s`, 'B vs A Gap']}
               />
-              <ReferenceLine y={0} stroke="#e10600" strokeDasharray="3 3" />
+              <ReferenceLine y={0} stroke="var(--accent)" strokeDasharray="3 3" />
               <Area
                 type="monotone"
                 dataKey="gap"

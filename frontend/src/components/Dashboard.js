@@ -13,7 +13,7 @@ const Card = ({ children, style, glow }) => (
     borderRadius: 12,
     padding: 24,
     animation: 'fadeIn 0.5s ease',
-    ...(glow ? { boxShadow: '0 0 30px rgba(225, 6, 0, 0.08)' } : {}),
+    ...(glow ? { boxShadow: '0 0 30px var(--accent-soft)' } : {}),
     ...style,
   }}>
     {children}
@@ -23,7 +23,7 @@ const Card = ({ children, style, glow }) => (
 const SectionTitle = ({ icon: Icon, title, subtitle }) => (
   <div style={{ marginBottom: 20 }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-      {Icon && <Icon size={18} color="#e10600" />}
+      {Icon && <Icon size={18} color="var(--accent)" />}
       <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>{title}</h2>
     </div>
     {subtitle && <p style={{ fontSize: 12, color: 'var(--text-soft)', marginLeft: Icon ? 28 : 0 }}>{subtitle}</p>}
@@ -38,7 +38,7 @@ const LoadingSpinner = () => (
 );
 
 const ErrorMessage = ({ message }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#e10600', padding: 16, fontSize: 13 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)', padding: 16, fontSize: 13 }}>
     <AlertCircle size={16} />
     <span>{message} (API may be temporarily unavailable)</span>
   </div>
@@ -69,19 +69,19 @@ const StandingRow = ({ position, name, points, team, color, isFirst }) => (
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '10px 12px',
     borderRadius: 8,
-    background: isFirst ? 'rgba(225, 6, 0, 0.08)' : 'transparent',
-    borderLeft: `3px solid ${color || '#555'}`,
+    background: isFirst ? 'var(--accent-soft)' : 'transparent',
+    borderLeft: `3px solid ${color || 'var(--text-soft)'}`,
     transition: 'background 0.2s ease',
     cursor: 'default',
   }}
     onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
-    onMouseLeave={e => e.currentTarget.style.background = isFirst ? 'rgba(225, 6, 0, 0.08)' : 'transparent'}
+    onMouseLeave={e => e.currentTarget.style.background = isFirst ? 'var(--accent-soft)' : 'transparent'}
   >
     <span style={{
       width: 28, height: 28, borderRadius: '50%',
-      background: isFirst ? '#e10600' : '#222',
+      background: isFirst ? 'var(--accent)' : 'var(--surface-hover)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 12, fontWeight: 700, color: '#fff',
+      fontSize: 12, fontWeight: 700, color: isFirst ? '#fff' : 'var(--text-muted)',
       fontFamily: "'JetBrains Mono', monospace",
     }}>
       {position}
@@ -190,9 +190,9 @@ export default function Dashboard() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             marginTop: 8, padding: '4px 12px',
-            background: 'rgba(225, 6, 0, 0.1)',
+            background: 'var(--accent-soft)',
             borderRadius: 20,
-            border: '1px solid rgba(225, 6, 0, 0.2)',
+            border: '1px solid var(--accent-border)',
           }}>
             <div style={{
               width: 6, height: 6, borderRadius: '50%',
@@ -341,7 +341,7 @@ export default function Dashboard() {
                   borderRadius: 6,
                   background: i < 3 ? 'rgba(255, 215, 0, 0.04)' : 'transparent',
                   borderLeft: `3px solid ${
-                    i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#333'
+                    i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--panel-border)'
                   }`,
                 }}>
                   <span style={{

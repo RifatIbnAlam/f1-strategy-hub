@@ -20,7 +20,7 @@ const Card = ({ children, style }) => (
 /* ─── Driver Selector Card ────────────────────────────────────────────────── */
 const DriverSelector = ({ drivers, selected, onSelect, label, color }) => (
   <div>
-    <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 8, display: 'block' }}>
+    <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 8, display: 'block' }}>
       {label}
     </label>
     <select
@@ -52,19 +52,19 @@ const CompStat = ({ label, val1, val2, color1, color2, icon: Icon, format = v =>
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{
-          fontSize: 16, fontWeight: 700, color: v1 >= v2 ? color1 : '#555',
+          fontSize: 16, fontWeight: 700, color: v1 >= v2 ? color1 : 'var(--text-soft)',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           {format(v1)}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {Icon && <Icon size={13} color="#888" />}
-          <span style={{ fontSize: 11, color: '#888', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          {Icon && <Icon size={13} color="var(--text-muted)" />}
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             {label}
           </span>
         </div>
         <span style={{
-          fontSize: 16, fontWeight: 700, color: v2 >= v1 ? color2 : '#555',
+          fontSize: 16, fontWeight: 700, color: v2 >= v1 ? color2 : 'var(--text-soft)',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           {format(v2)}
@@ -136,7 +136,7 @@ export default function DriverComparison() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <GitCompare size={28} color="#e10600" />
+          <GitCompare size={28} color="var(--accent)" />
           Driver Comparison
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
@@ -161,10 +161,10 @@ export default function DriverComparison() {
             />
             <div style={{
               width: 50, height: 50, borderRadius: '50%',
-              background: 'rgba(225, 6, 0, 0.1)',
-              border: '2px solid rgba(225, 6, 0, 0.3)',
+              background: 'var(--accent-soft)',
+              border: '2px solid var(--accent-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#e10600', fontSize: 14, fontWeight: 800,
+              color: 'var(--accent)', fontSize: 14, fontWeight: 800,
             }}>
               VS
             </div>
@@ -211,13 +211,13 @@ export default function DriverComparison() {
 
           {/* Radar Chart */}
           <Card>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Performance Profile
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={radarData}>
-                <PolarGrid stroke="#222" />
-                <PolarAngleAxis dataKey="metric" tick={{ fill: '#888', fontSize: 11 }} />
+                <PolarGrid stroke="var(--panel-border)" />
+                <PolarAngleAxis dataKey="metric" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
                 <PolarRadiusAxis tick={false} axisLine={false} />
                 <Radar name={driver1.Driver.familyName} dataKey="d1"
                   stroke={color1} fill={color1} fillOpacity={0.2} strokeWidth={2} />
@@ -235,9 +235,9 @@ export default function DriverComparison() {
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={racePositions} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-                <XAxis dataKey="race" stroke="#555" fontSize={10} angle={-30} textAnchor="end" height={60} />
-                <YAxis stroke="#555" fontSize={11} reversed domain={[1, 20]} label={{ value: 'Position', angle: -90, position: 'insideLeft', fill: '#555', fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
+                <XAxis dataKey="race" stroke="var(--text-soft)" fontSize={10} angle={-30} textAnchor="end" height={60} />
+                <YAxis stroke="var(--text-soft)" fontSize={11} reversed domain={[1, 20]} label={{ value: 'Position', angle: -90, position: 'insideLeft', fill: 'var(--text-soft)', fontSize: 11 }} />
                 <Tooltip contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }} />
                 <Bar dataKey={driver1.Driver.familyName} fill={color1} radius={[4, 4, 0, 0]} />
                 <Bar dataKey={driver2.Driver.familyName} fill={color2} radius={[4, 4, 0, 0]} />
@@ -248,7 +248,7 @@ export default function DriverComparison() {
         </div>
       ) : (
         <Card style={{ textAlign: 'center', padding: 60 }}>
-          <Search size={48} color="#333" style={{ marginBottom: 16 }} />
+          <Search size={48} color="var(--text-soft)" style={{ marginBottom: 16 }} />
           <div style={{ fontSize: 16, color: 'var(--text-soft)', fontWeight: 600 }}>Select two drivers to compare</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
             Choose from the current championship standings above

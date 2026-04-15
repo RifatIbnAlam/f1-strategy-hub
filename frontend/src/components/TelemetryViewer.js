@@ -72,10 +72,10 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
                 <td style={{ padding: '6px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                   {formatTime(lap.duration_sector_1)}
                 </td>
-                <td style={{ padding: '6px', fontSize: 12, color: '#aaa', fontFamily: "'JetBrains Mono', monospace" }}>
+                <td style={{ padding: '6px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                   {formatTime(lap.duration_sector_2)}
                 </td>
-                <td style={{ padding: '6px', fontSize: 12, color: '#aaa', fontFamily: "'JetBrains Mono', monospace" }}>
+                <td style={{ padding: '6px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                   {formatTime(lap.duration_sector_3)}
                 </td>
                 <td style={{ padding: '6px' }}>
@@ -201,7 +201,7 @@ export default function TelemetryViewer() {
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Activity size={28} color="#e10600" />
+          <Activity size={28} color="var(--accent)" />
           Telemetry Viewer
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
@@ -213,14 +213,14 @@ export default function TelemetryViewer() {
       <Card style={{ marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>YEAR</label>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>YEAR</label>
             <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSelectedSession(null); setSelectedDriver(null); }}
               style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               {[2026, 2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>SESSION</label>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>SESSION</label>
             {sessionsLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-soft)', padding: 8, fontSize: 12 }}>
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading sessions...
@@ -238,7 +238,7 @@ export default function TelemetryViewer() {
             )}
           </div>
           <div>
-            <label style={{ fontSize: 11, color: '#888', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER</label>
+            <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER</label>
             {driversLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-soft)', padding: 8, fontSize: 12 }}>
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
@@ -261,7 +261,7 @@ export default function TelemetryViewer() {
       {/* Telemetry Content */}
       {lapsLoading ? (
         <Card style={{ textAlign: 'center', padding: 60 }}>
-          <Loader size={32} color="#e10600" style={{ animation: 'pulse 1s infinite', marginBottom: 16 }} />
+          <Loader size={32} color="var(--accent)" style={{ animation: 'pulse 1s infinite', marginBottom: 16 }} />
           <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Fetching telemetry data from OpenF1...</div>
         </Card>
       ) : laps && laps.length > 0 ? (
@@ -273,12 +273,12 @@ export default function TelemetryViewer() {
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={lapChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-                <XAxis dataKey="lap" stroke="#555" fontSize={11} label={{ value: 'Lap', position: 'insideBottom', offset: -2, fill: '#555', fontSize: 11 }} />
-                <YAxis stroke="#555" fontSize={11} domain={['auto', 'auto']}
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
+                <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} label={{ value: 'Lap', position: 'insideBottom', offset: -2, fill: 'var(--text-soft)', fontSize: 11 }} />
+                <YAxis stroke="var(--text-soft)" fontSize={11} domain={['auto', 'auto']}
                   tickFormatter={v => `${v.toFixed(1)}s`} />
                 <Tooltip
-                  contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 8, fontSize: 12 }}
+                  contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
                   labelFormatter={l => `Lap ${l}`}
                   formatter={(v) => [`${v.toFixed(3)}s`]}
                 />
@@ -290,15 +290,15 @@ export default function TelemetryViewer() {
 
           {/* Sector Times Chart */}
           <Card>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Sector Times
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={lapChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#222" />
-                <XAxis dataKey="lap" stroke="#555" fontSize={11} />
-                <YAxis stroke="#555" fontSize={11} tickFormatter={v => `${v.toFixed(1)}s`} />
-                <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #333', borderRadius: 8, fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
+                <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
+                <YAxis stroke="var(--text-soft)" fontSize={11} tickFormatter={v => `${v.toFixed(1)}s`} />
+                <Tooltip contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }} />
                 <Line type="monotone" dataKey="s1" stroke="#FF1E1E" dot={false} strokeWidth={1.5} name="Sector 1" />
                 <Line type="monotone" dataKey="s2" stroke="#FFD700" dot={false} strokeWidth={1.5} name="Sector 2" />
                 <Line type="monotone" dataKey="s3" stroke="#00FF87" dot={false} strokeWidth={1.5} name="Sector 3" />
@@ -309,7 +309,7 @@ export default function TelemetryViewer() {
 
           {/* Tire Strategy Visual */}
           <Card>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Tire Strategy
             </h3>
             {stints && stints.length > 0 ? (
@@ -336,10 +336,10 @@ export default function TelemetryViewer() {
                         width: 10, height: 10, borderRadius: '50%',
                         background: TIRE_COMPOUNDS[s.compound]?.color || '#888',
                       }} />
-                      <span style={{ fontSize: 12, color: '#fff', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace" }}>
                         Stint {i + 1}
                       </span>
-                      <span style={{ fontSize: 12, color: '#888' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
                         {s.compound} — Laps {s.lap_start}–{s.lap_end} ({s.lap_end - s.lap_start + 1} laps)
                       </span>
                     </div>
@@ -347,7 +347,7 @@ export default function TelemetryViewer() {
                 </div>
               </div>
             ) : (
-              <div style={{ color: '#555', fontSize: 13 }}>No stint data available</div>
+              <div style={{ color: 'var(--text-soft)', fontSize: 13 }}>No stint data available</div>
             )}
           </Card>
 
@@ -361,13 +361,13 @@ export default function TelemetryViewer() {
         </div>
       ) : selectedSession && selectedDriver ? (
         <Card style={{ textAlign: 'center', padding: 60 }}>
-          <Radio size={48} color="#333" style={{ marginBottom: 16 }} />
+          <Radio size={48} color="var(--text-soft)" style={{ marginBottom: 16 }} />
           <div style={{ color: 'var(--text-soft)', fontSize: 14 }}>No lap data available for this selection</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>Try a different session or driver</div>
         </Card>
       ) : (
         <Card style={{ textAlign: 'center', padding: 60 }}>
-          <Gauge size={48} color="#333" style={{ marginBottom: 16 }} />
+          <Gauge size={48} color="var(--text-soft)" style={{ marginBottom: 16 }} />
           <div style={{ color: 'var(--text-soft)', fontSize: 16, fontWeight: 600 }}>Select a session and driver</div>
           <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 4 }}>
             Choose a race and driver above to view telemetry data

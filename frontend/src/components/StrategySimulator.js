@@ -38,13 +38,59 @@ function simulateLapTime({
 }
 
 /* ─── Default Circuit Configs ─────────────────────────────────────────────── */
+// All 24 rounds of the 2025 F1 World Championship calendar
+// baseLap: representative qualifying/race lap in seconds (recent season avg)
+// pitLoss: total time lost per pit stop (in-lap + out-lap delta vs flying lap)
+// fuelEffect: lap time penalty per kg of fuel (s/kg)
 const CIRCUIT_PRESETS = {
-  monza: { name: 'Monza', baseLap: 81.0, totalLaps: 53, pitLoss: 24, fuelEffect: 0.035 },
-  silverstone: { name: 'Silverstone', baseLap: 87.0, totalLaps: 52, pitLoss: 22, fuelEffect: 0.038 },
-  monaco: { name: 'Monaco', baseLap: 72.5, totalLaps: 78, pitLoss: 20, fuelEffect: 0.030 },
-  spa: { name: 'Spa', baseLap: 106.0, totalLaps: 44, pitLoss: 23, fuelEffect: 0.040 },
-  suzuka: { name: 'Suzuka', baseLap: 91.0, totalLaps: 53, pitLoss: 23, fuelEffect: 0.037 },
-  bahrain: { name: 'Bahrain', baseLap: 90.5, totalLaps: 57, pitLoss: 22, fuelEffect: 0.036 },
+  // ── Round 1 ──────────────────────────────────────────────────────────────
+  bahrain:     { name: 'Bahrain — Sakhir',           baseLap:  90.5, totalLaps: 57, pitLoss: 22, fuelEffect: 0.036 },
+  // ── Round 2 ──────────────────────────────────────────────────────────────
+  jeddah:      { name: 'Saudi Arabia — Jeddah',       baseLap:  90.1, totalLaps: 50, pitLoss: 24, fuelEffect: 0.033 },
+  // ── Round 3 ──────────────────────────────────────────────────────────────
+  albert_park: { name: 'Australia — Albert Park',     baseLap:  80.2, totalLaps: 58, pitLoss: 24, fuelEffect: 0.034 },
+  // ── Round 4 ──────────────────────────────────────────────────────────────
+  suzuka:      { name: 'Japan — Suzuka',              baseLap:  91.0, totalLaps: 53, pitLoss: 23, fuelEffect: 0.037 },
+  // ── Round 5 ──────────────────────────────────────────────────────────────
+  shanghai:    { name: 'China — Shanghai',            baseLap:  96.5, totalLaps: 56, pitLoss: 25, fuelEffect: 0.036 },
+  // ── Round 6 ──────────────────────────────────────────────────────────────
+  miami:       { name: 'USA — Miami',                 baseLap:  89.2, totalLaps: 57, pitLoss: 22, fuelEffect: 0.035 },
+  // ── Round 7 ──────────────────────────────────────────────────────────────
+  imola:       { name: 'Emilia Romagna — Imola',      baseLap:  77.1, totalLaps: 63, pitLoss: 26, fuelEffect: 0.034 },
+  // ── Round 8 ──────────────────────────────────────────────────────────────
+  monaco:      { name: 'Monaco — Monte Carlo',        baseLap:  72.5, totalLaps: 78, pitLoss: 20, fuelEffect: 0.030 },
+  // ── Round 9 ──────────────────────────────────────────────────────────────
+  montreal:    { name: 'Canada — Montréal',           baseLap:  74.0, totalLaps: 70, pitLoss: 23, fuelEffect: 0.033 },
+  // ── Round 10 ─────────────────────────────────────────────────────────────
+  barcelona:   { name: 'Spain — Barcelona',           baseLap:  82.4, totalLaps: 66, pitLoss: 21, fuelEffect: 0.037 },
+  // ── Round 11 ─────────────────────────────────────────────────────────────
+  red_bull_ring:{ name: 'Austria — Red Bull Ring',    baseLap:  64.8, totalLaps: 71, pitLoss: 23, fuelEffect: 0.032 },
+  // ── Round 12 ─────────────────────────────────────────────────────────────
+  silverstone: { name: 'Britain — Silverstone',       baseLap:  87.0, totalLaps: 52, pitLoss: 22, fuelEffect: 0.038 },
+  // ── Round 13 ─────────────────────────────────────────────────────────────
+  hungaroring: { name: 'Hungary — Hungaroring',       baseLap:  78.6, totalLaps: 70, pitLoss: 20, fuelEffect: 0.034 },
+  // ── Round 14 ─────────────────────────────────────────────────────────────
+  spa:         { name: 'Belgium — Spa-Francorchamps', baseLap: 106.0, totalLaps: 44, pitLoss: 23, fuelEffect: 0.040 },
+  // ── Round 15 ─────────────────────────────────────────────────────────────
+  zandvoort:   { name: 'Netherlands — Zandvoort',     baseLap:  74.0, totalLaps: 72, pitLoss: 23, fuelEffect: 0.033 },
+  // ── Round 16 ─────────────────────────────────────────────────────────────
+  monza:       { name: 'Italy — Monza',               baseLap:  81.0, totalLaps: 53, pitLoss: 24, fuelEffect: 0.035 },
+  // ── Round 17 ─────────────────────────────────────────────────────────────
+  baku:        { name: 'Azerbaijan — Baku',           baseLap: 103.0, totalLaps: 51, pitLoss: 18, fuelEffect: 0.033 },
+  // ── Round 18 ─────────────────────────────────────────────────────────────
+  singapore:   { name: 'Singapore — Marina Bay',      baseLap:  97.5, totalLaps: 62, pitLoss: 22, fuelEffect: 0.031 },
+  // ── Round 19 ─────────────────────────────────────────────────────────────
+  cota:        { name: 'USA — Circuit of the Americas', baseLap: 96.2, totalLaps: 56, pitLoss: 22, fuelEffect: 0.036 },
+  // ── Round 20 ─────────────────────────────────────────────────────────────
+  mexico_city: { name: 'Mexico — Autodromo Hermanos Rodríguez', baseLap: 79.4, totalLaps: 71, pitLoss: 23, fuelEffect: 0.030 },
+  // ── Round 21 ─────────────────────────────────────────────────────────────
+  interlagos:  { name: 'Brazil — Interlagos',         baseLap:  73.1, totalLaps: 71, pitLoss: 24, fuelEffect: 0.034 },
+  // ── Round 22 ─────────────────────────────────────────────────────────────
+  las_vegas:   { name: 'USA — Las Vegas Strip',       baseLap:  97.8, totalLaps: 50, pitLoss: 20, fuelEffect: 0.034 },
+  // ── Round 23 ─────────────────────────────────────────────────────────────
+  lusail:      { name: 'Qatar — Lusail',              baseLap:  83.0, totalLaps: 57, pitLoss: 22, fuelEffect: 0.036 },
+  // ── Round 24 ─────────────────────────────────────────────────────────────
+  yas_marina:  { name: 'Abu Dhabi — Yas Marina',      baseLap:  85.3, totalLaps: 58, pitLoss: 25, fuelEffect: 0.035 },
 };
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */

@@ -5,6 +5,7 @@ import { getLatestSession } from '../services/openf1';
 import { getTeamColor } from '../data/constants';
 import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle } from 'lucide-react';
 import { getFlag } from '../data/flags';
+import TeamBadge from './TeamBadge';
 
 /* ─── Shared UI Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style, glow }) => (
@@ -92,7 +93,7 @@ const StandingRow = ({ position, name, points, team, color, isFirst, nationality
         {nationality && <span style={{ marginRight: 6 }}>{getFlag(nationality)}</span>}
         {name}
       </div>
-      <div style={{ fontSize: 11, color: 'var(--text-soft)' }}>{team}</div>
+      <TeamBadge team={team} size="sm" />
     </div>
     <span style={{
       fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',

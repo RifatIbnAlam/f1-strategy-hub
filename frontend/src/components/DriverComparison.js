@@ -8,6 +8,7 @@ import { getDriverStandings, getRaceResults } from '../services/jolpica';
 import { getTeamColor } from '../data/constants';
 import { GitCompare, Search, Loader, Trophy, Flag, Award, TrendingUp } from 'lucide-react';
 import { getFlag } from '../data/flags';
+import TeamBadge from './TeamBadge';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -193,14 +194,14 @@ export default function DriverComparison() {
                   <span style={{ marginRight: 6 }}>{getFlag(driver1.Driver.nationality)}</span>
                   {driver1.Driver.givenName} {driver1.Driver.familyName}
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver1.Constructors?.[0]?.name}</div>
+                <div style={{ marginTop: 4 }}><TeamBadge team={driver1.Constructors?.[0]?.name} size="md" /></div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: color2 }}>
                   {driver2.Driver.givenName} {driver2.Driver.familyName}
                   <span style={{ marginLeft: 6 }}>{getFlag(driver2.Driver.nationality)}</span>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-soft)' }}>{driver2.Constructors?.[0]?.name}</div>
+                <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end' }}><TeamBadge team={driver2.Constructors?.[0]?.name} size="md" /></div>
               </div>
             </div>
 

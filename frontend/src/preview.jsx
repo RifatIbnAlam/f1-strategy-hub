@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 
-/* ─── Inline Data (preview only) ──────────────────────────────────────────── */
+/* ─── Team / Constructor Color Map ────────────────────────────────────────── */
 const CHAMPION_TEAM_COLORS = {
+  // Driver team names
   'Alfa Romeo': '#900000', 'Ferrari': '#E8002D', 'Maserati': '#8B0000',
   'Maserati / Mercedes': '#8B0000', 'Mercedes': '#27F4D2',
   'Cooper-Climax': '#006633', 'BRM': '#004225',
@@ -17,112 +18,58 @@ const CHAMPION_TEAM_COLORS = {
   'Red Bull-Renault': '#3671C6', 'Red Bull-Honda': '#3671C6',
   'Red Bull Racing': '#3671C6', 'Brawn-Mercedes': '#C8F000',
   'Vanwall': '#006633',
+  // Constructor championship name lookups (champion IS the team)
+  'Cooper-Climax (C)': '#006633', 'Lotus-Climax (C)': '#DAA520',
+  'Williams': '#1868DB', 'Tyrrell-Ford (C)': '#003DA5',
+  'Lotus-Ford (C)': '#DAA520', 'Brabham-Repco (C)': '#006847',
+  'McLaren-Ford (C)': '#FF8000', 'Williams-Ford (C)': '#1868DB',
+  'Williams-Honda (C)': '#1868DB', 'McLaren-TAG (C)': '#FF8000',
+  'McLaren-Honda (C)': '#FF8000', 'Williams-Renault (C)': '#1868DB',
+  'Benetton-Renault (C)': '#00B140',
 };
 
+// Resolve a color for any champion entry (works for both drivers & constructors)
+function getChampionColor(c) {
+  return CHAMPION_TEAM_COLORS[c.team] || CHAMPION_TEAM_COLORS[c.champion] || '#555555';
+}
+
+/* ─── F1 Eras ─────────────────────────────────────────────────────────────── */
 const F1_ERAS = [
-  { id: 'pioneer', name: 'Pioneer Era', years: [1950, 1960], color: '#CD853F',
-    description: 'Front-engine cars, minimal safety, gentlemen racers. Dominated by Fangio\'s genius.' },
-  { id: 'revolution', name: 'The Revolution', years: [1961, 1970], color: '#DAA520',
-    description: 'Rear-engine revolution, aero innovation. Jim Clark\'s brilliance, tragic losses.' },
-  { id: 'garagiste', name: 'Garagiste & Ground Effect', years: [1971, 1982], color: '#228B22',
+  { id: 'pioneer',     name: 'Pioneer Era',               years: [1950, 1960], color: '#CD853F',
+    description: "Front-engine cars, minimal safety, gentlemen racers. Dominated by Fangio's genius." },
+  { id: 'revolution',  name: 'The Revolution',             years: [1961, 1970], color: '#DAA520',
+    description: "Rear-engine revolution, aero innovation. Jim Clark's brilliance, tragic losses." },
+  { id: 'garagiste',   name: 'Garagiste & Ground Effect',  years: [1971, 1982], color: '#228B22',
     description: 'British constructors dominate. Ground effect. Stewart, Lauda, and Fittipaldi shine.' },
-  { id: 'turbo', name: 'Turbo Era', years: [1983, 1993], color: '#9400D3',
+  { id: 'turbo',       name: 'Turbo Era',                  years: [1983, 1993], color: '#9400D3',
     description: 'Turbocharged monsters. Senna vs Prost — the greatest rivalry.' },
-  { id: 'schumacher', name: 'Schumacher Era', years: [1994, 2008], color: '#E8002D',
-    description: 'Michael rewrites every record. Ferrari\'s unstoppable dynasty.' },
-  { id: 'hybrid-dawn', name: 'Red Bull & Hybrid Dawn', years: [2009, 2016], color: '#3671C6',
-    description: 'Vettel\'s four-peat, then Mercedes\' hybrid dominance begins.' },
-  { id: 'hamilton', name: 'Hamilton Era', years: [2017, 2021], color: '#27F4D2',
-    description: 'Hamilton matches Schumacher\'s 7 titles. Mercedes unprecedented dominance.' },
-  { id: 'modern', name: 'Ground Effect Returns', years: [2022, 2026], color: '#FF8000',
-    description: 'New regulations, Verstappen\'s dominance, McLaren\'s resurgence.' },
+  { id: 'schumacher',  name: 'Schumacher Era',             years: [1994, 2008], color: '#E8002D',
+    description: "Michael rewrites every record. Ferrari's unstoppable dynasty." },
+  { id: 'hybrid-dawn', name: 'Red Bull & Hybrid Dawn',     years: [2009, 2016], color: '#3671C6',
+    description: "Vettel's four-peat, then Mercedes' hybrid dominance begins." },
+  { id: 'hamilton',    name: 'Hamilton Era',               years: [2017, 2021], color: '#27F4D2',
+    description: "Hamilton matches Schumacher's 7 titles. Mercedes unprecedented dominance." },
+  { id: 'modern',      name: 'Ground Effect Returns',      years: [2022, 2026], color: '#FF8000',
+    description: "New regulations, Verstappen's dominance, McLaren's resurgence." },
 ];
 
-const RECORDS = [
-  { label: 'Most Titles', value: '7', holders: 'Lewis Hamilton, Michael Schumacher' },
-  { label: 'Most Consecutive', value: '4', holders: 'Vettel (2010-13), Verstappen (2021-24)' },
-  { label: 'Youngest Champion', value: '23y 134d', holders: 'Sebastian Vettel (2010)' },
-  { label: 'Oldest Champion', value: '46y 41d', holders: 'Juan Manuel Fangio (1957)' },
-  { label: 'Closest Fight', value: '0 pts', holders: '2008 — Hamilton beat Massa on countback' },
-  { label: 'Posthumous Champion', value: '1970', holders: 'Jochen Rindt — after fatal crash at Monza' },
+/* ─── Records ─────────────────────────────────────────────────────────────── */
+const DRIVER_RECORDS = [
+  { label: 'Most Titles',         value: '7',        holders: 'Lewis Hamilton, Michael Schumacher', icon: '🏆' },
+  { label: 'Most Consecutive',    value: '4',        holders: 'Vettel (2010–13), Verstappen (2021–24)', icon: '🔥' },
+  { label: 'Youngest Champion',   value: '23y 134d', holders: 'Sebastian Vettel (2010)', icon: '⚡' },
+  { label: 'Oldest Champion',     value: '46y 41d',  holders: 'Juan Manuel Fangio (1957)', icon: '⏱' },
+  { label: 'Closest Title Fight', value: '0 pts',    holders: '2008 — Hamilton beat Massa on countback in the final corner', icon: '🎯' },
+  { label: 'Posthumous Champion', value: '1970',     holders: 'Jochen Rindt — won title after fatal crash at Monza', icon: '⭐' },
 ];
 
-const DRIVER_CHAMPIONS = [
-  { year: 1950, champion: 'Nino Farina', nationality: 'Italian', team: 'Alfa Romeo' },
-  { year: 1951, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Alfa Romeo' },
-  { year: 1952, champion: 'Alberto Ascari', nationality: 'Italian', team: 'Ferrari' },
-  { year: 1953, champion: 'Alberto Ascari', nationality: 'Italian', team: 'Ferrari' },
-  { year: 1954, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Maserati / Mercedes' },
-  { year: 1955, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Mercedes' },
-  { year: 1956, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Ferrari' },
-  { year: 1957, champion: 'Juan Manuel Fangio', nationality: 'Argentine', team: 'Maserati' },
-  { year: 1958, champion: 'Mike Hawthorn', nationality: 'British', team: 'Ferrari' },
-  { year: 1959, champion: 'Jack Brabham', nationality: 'Australian', team: 'Cooper-Climax' },
-  { year: 1960, champion: 'Jack Brabham', nationality: 'Australian', team: 'Cooper-Climax' },
-  { year: 1961, champion: 'Phil Hill', nationality: 'American', team: 'Ferrari' },
-  { year: 1962, champion: 'Graham Hill', nationality: 'British', team: 'BRM' },
-  { year: 1963, champion: 'Jim Clark', nationality: 'British', team: 'Lotus-Climax' },
-  { year: 1964, champion: 'John Surtees', nationality: 'British', team: 'Ferrari' },
-  { year: 1965, champion: 'Jim Clark', nationality: 'British', team: 'Lotus-Climax' },
-  { year: 1966, champion: 'Jack Brabham', nationality: 'Australian', team: 'Brabham-Repco' },
-  { year: 1967, champion: 'Denny Hulme', nationality: 'New Zealander', team: 'Brabham-Repco' },
-  { year: 1968, champion: 'Graham Hill', nationality: 'British', team: 'Lotus-Ford' },
-  { year: 1969, champion: 'Jackie Stewart', nationality: 'British', team: 'Matra-Ford' },
-  { year: 1970, champion: 'Jochen Rindt', nationality: 'Austrian', team: 'Lotus-Ford' },
-  { year: 1971, champion: 'Jackie Stewart', nationality: 'British', team: 'Tyrrell-Ford' },
-  { year: 1972, champion: 'Emerson Fittipaldi', nationality: 'Brazilian', team: 'Lotus-Ford' },
-  { year: 1973, champion: 'Jackie Stewart', nationality: 'British', team: 'Tyrrell-Ford' },
-  { year: 1974, champion: 'Emerson Fittipaldi', nationality: 'Brazilian', team: 'McLaren-Ford' },
-  { year: 1975, champion: 'Niki Lauda', nationality: 'Austrian', team: 'Ferrari' },
-  { year: 1976, champion: 'James Hunt', nationality: 'British', team: 'McLaren-Ford' },
-  { year: 1977, champion: 'Niki Lauda', nationality: 'Austrian', team: 'Ferrari' },
-  { year: 1978, champion: 'Mario Andretti', nationality: 'American', team: 'Lotus-Ford' },
-  { year: 1979, champion: 'Jody Scheckter', nationality: 'South African', team: 'Ferrari' },
-  { year: 1980, champion: 'Alan Jones', nationality: 'Australian', team: 'Williams-Ford' },
-  { year: 1981, champion: 'Nelson Piquet', nationality: 'Brazilian', team: 'Brabham-Ford' },
-  { year: 1982, champion: 'Keke Rosberg', nationality: 'Finnish', team: 'Williams-Ford' },
-  { year: 1983, champion: 'Nelson Piquet', nationality: 'Brazilian', team: 'Brabham-BMW' },
-  { year: 1984, champion: 'Niki Lauda', nationality: 'Austrian', team: 'McLaren-TAG' },
-  { year: 1985, champion: 'Alain Prost', nationality: 'French', team: 'McLaren-TAG' },
-  { year: 1986, champion: 'Alain Prost', nationality: 'French', team: 'McLaren-TAG' },
-  { year: 1987, champion: 'Nelson Piquet', nationality: 'Brazilian', team: 'Williams-Honda' },
-  { year: 1988, champion: 'Ayrton Senna', nationality: 'Brazilian', team: 'McLaren-Honda' },
-  { year: 1989, champion: 'Alain Prost', nationality: 'French', team: 'McLaren-Honda' },
-  { year: 1990, champion: 'Ayrton Senna', nationality: 'Brazilian', team: 'McLaren-Honda' },
-  { year: 1991, champion: 'Ayrton Senna', nationality: 'Brazilian', team: 'McLaren-Honda' },
-  { year: 1992, champion: 'Nigel Mansell', nationality: 'British', team: 'Williams-Renault' },
-  { year: 1993, champion: 'Alain Prost', nationality: 'French', team: 'Williams-Renault' },
-  { year: 1994, champion: 'Michael Schumacher', nationality: 'German', team: 'Benetton-Ford' },
-  { year: 1995, champion: 'Michael Schumacher', nationality: 'German', team: 'Benetton-Renault' },
-  { year: 1996, champion: 'Damon Hill', nationality: 'British', team: 'Williams-Renault' },
-  { year: 1997, champion: 'Jacques Villeneuve', nationality: 'Canadian', team: 'Williams-Renault' },
-  { year: 1998, champion: 'Mika Hakkinen', nationality: 'Finnish', team: 'McLaren-Mercedes' },
-  { year: 1999, champion: 'Mika Hakkinen', nationality: 'Finnish', team: 'McLaren-Mercedes' },
-  { year: 2000, champion: 'Michael Schumacher', nationality: 'German', team: 'Ferrari' },
-  { year: 2001, champion: 'Michael Schumacher', nationality: 'German', team: 'Ferrari' },
-  { year: 2002, champion: 'Michael Schumacher', nationality: 'German', team: 'Ferrari' },
-  { year: 2003, champion: 'Michael Schumacher', nationality: 'German', team: 'Ferrari' },
-  { year: 2004, champion: 'Michael Schumacher', nationality: 'German', team: 'Ferrari' },
-  { year: 2005, champion: 'Fernando Alonso', nationality: 'Spanish', team: 'Renault' },
-  { year: 2006, champion: 'Fernando Alonso', nationality: 'Spanish', team: 'Renault' },
-  { year: 2007, champion: 'Kimi Raikkonen', nationality: 'Finnish', team: 'Ferrari' },
-  { year: 2008, champion: 'Lewis Hamilton', nationality: 'British', team: 'McLaren-Mercedes' },
-  { year: 2009, champion: 'Jenson Button', nationality: 'British', team: 'Brawn-Mercedes' },
-  { year: 2010, champion: 'Sebastian Vettel', nationality: 'German', team: 'Red Bull-Renault' },
-  { year: 2011, champion: 'Sebastian Vettel', nationality: 'German', team: 'Red Bull-Renault' },
-  { year: 2012, champion: 'Sebastian Vettel', nationality: 'German', team: 'Red Bull-Renault' },
-  { year: 2013, champion: 'Sebastian Vettel', nationality: 'German', team: 'Red Bull-Renault' },
-  { year: 2014, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2015, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2016, champion: 'Nico Rosberg', nationality: 'German', team: 'Mercedes' },
-  { year: 2017, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2018, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2019, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2020, champion: 'Lewis Hamilton', nationality: 'British', team: 'Mercedes' },
-  { year: 2021, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull-Honda' },
-  { year: 2022, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
-  { year: 2023, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
-  { year: 2024, champion: 'Max Verstappen', nationality: 'Dutch', team: 'Red Bull Racing' },
+const CONSTRUCTOR_RECORDS = [
+  { label: 'Most Titles',         value: '16',       holders: 'Ferrari (1961, 1964, 1975–77, 1979, 1982–83, 1999–2004, 2007–08)', icon: '🏆' },
+  { label: 'Most Consecutive',    value: '8',        holders: 'Mercedes (2014–2021)', icon: '🔥' },
+  { label: 'First Champion',      value: '1958',     holders: 'Vanwall — the first constructor title ever awarded', icon: '⭐' },
+  { label: 'One-Season Wonder',   value: '2009',     holders: 'Brawn GP — won title in their only full season', icon: '⚡' },
+  { label: 'Longest Streak',      value: '75 yrs',   holders: 'Ferrari — every season since 1950', icon: '📅' },
+  { label: 'Latest Champion',     value: '2024–25',  holders: 'McLaren — back-to-back after 26-year drought', icon: '🎯' },
 ];
 
 /* ─── Card ────────────────────────────────────────────────────────────────── */
@@ -135,7 +82,7 @@ const Card = ({ children, style }) => (
 );
 
 /* ─── Dominance Timeline ──────────────────────────────────────────────────── */
-function DominanceTimeline({ champions }) {
+function DominanceTimeline({ champions, mode }) {
   const [hoveredYear, setHoveredYear] = useState(null);
   const [selectedChampion, setSelectedChampion] = useState(null);
 
@@ -147,7 +94,7 @@ function DominanceTimeline({ champions }) {
         current.end = c.year; current.count++;
       } else {
         if (current) result.push(current);
-        current = { champion: c.champion, start: c.year, end: c.year, count: 1, team: c.team };
+        current = { ...c, start: c.year, end: c.year, count: 1 };
       }
     });
     if (current) result.push(current);
@@ -155,35 +102,43 @@ function DominanceTimeline({ champions }) {
   }, [champions]);
 
   const hoveredData = hoveredYear ? champions.find(c => c.year === hoveredYear) : null;
+  const hoveredColor = hoveredData ? getChampionColor(hoveredData) : '#555';
 
   return (
     <Card>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Driver Dominance Timeline</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+            {mode === 'drivers' ? 'Driver' : 'Constructor'} Dominance Timeline
+          </h3>
           <p style={{ fontSize: 11, color: 'var(--text-soft)', margin: '4px 0 0' }}>
-            Every championship since 1950. Hover to explore — consecutive titles form visible streaks.
+            Every championship since {champions[0]?.year}. Hover to explore — dynasties form visible colour streaks.
           </p>
         </div>
         {hoveredData && (
           <div style={{
             padding: '6px 14px', borderRadius: 8,
-            background: `${CHAMPION_TEAM_COLORS[hoveredData.team] || '#555'}22`,
-            border: `1px solid ${CHAMPION_TEAM_COLORS[hoveredData.team] || '#555'}44`,
+            background: `${hoveredColor}22`,
+            border: `1px solid ${hoveredColor}44`,
           }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{hoveredData.year}</span>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>{hoveredData.champion}</span>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{hoveredData.team}</span>
+            {hoveredData.team && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{hoveredData.team}</span>
+            )}
           </div>
         )}
       </div>
+
+      {/* Year tiles */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         {champions.map((c) => {
-          const color = CHAMPION_TEAM_COLORS[c.team] || '#555';
+          const color = getChampionColor(c);
           const isHovered = hoveredYear === c.year;
           const isDimmed = selectedChampion && selectedChampion !== c.champion;
           return (
-            <div key={c.year}
+            <div
+              key={c.year}
               onMouseEnter={() => setHoveredYear(c.year)}
               onMouseLeave={() => setHoveredYear(null)}
               onClick={() => setSelectedChampion(selectedChampion === c.champion ? null : c.champion)}
@@ -194,32 +149,45 @@ function DominanceTimeline({ champions }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', transition: 'all 0.15s ease',
                 transform: isHovered ? 'scale(1.15)' : 'scale(1)',
-                zIndex: isHovered ? 10 : 1, opacity: isDimmed ? 0.2 : 1,
+                zIndex: isHovered ? 10 : 1,
+                opacity: isDimmed ? 0.15 : 1,
+                position: 'relative',
               }}
-              title={`${c.year}: ${c.champion} (${c.team})`}
+              title={`${c.year}: ${c.champion}${c.team ? ` (${c.team})` : ''}`}
             >
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', fontFamily: "'JetBrains Mono', monospace", textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>
+              <span style={{
+                fontSize: 9, fontWeight: 700, color: '#fff',
+                fontFamily: "'JetBrains Mono', monospace",
+                textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+              }}>
                 {String(c.year).slice(-2)}
               </span>
             </div>
           );
         })}
       </div>
+
+      {/* Dynasty streak pills */}
       <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {streaks.filter(s => s.count >= 2).map((s, i) => {
-          const color = CHAMPION_TEAM_COLORS[s.team] || '#555';
+          const color = getChampionColor(s);
           return (
-            <button key={i} onClick={() => setSelectedChampion(selectedChampion === s.champion ? null : s.champion)}
+            <button
+              key={i}
+              onClick={() => setSelectedChampion(selectedChampion === s.champion ? null : s.champion)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 6,
-                background: selectedChampion === s.champion ? `${color}33` : 'rgba(255,255,255,0.03)',
-                border: `1px solid ${selectedChampion === s.champion ? color : 'rgba(255,255,255,0.08)'}`,
-                cursor: 'pointer', color: '#ccc', fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif",
-              }}>
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '4px 10px', borderRadius: 6,
+                background: selectedChampion === s.champion ? `${color}33` : 'var(--surface-hover)',
+                border: `1px solid ${selectedChampion === s.champion ? color : 'var(--panel-border)'}`,
+                cursor: 'pointer', color: 'var(--text-secondary)',
+                fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+              }}
+            >
               <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
               {s.champion}
-              <span style={{ color: '#666', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
-                {s.count}x ({s.start}{s.end !== s.start ? `–${s.end}` : ''})
+              <span style={{ color: 'var(--text-soft)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
+                {s.count}× ({s.start}{s.end !== s.start ? `–${s.end}` : ''})
               </span>
             </button>
           );
@@ -241,58 +209,74 @@ function EraSection({ champions }) {
           const eraChampions = champions.filter(c => c.year >= era.years[0] && c.year <= era.years[1]);
           const isExpanded = expandedEra === era.id;
           const champCounts = {};
-          eraChampions.forEach(c => champCounts[c.champion] = (champCounts[c.champion] || 0) + 1);
+          eraChampions.forEach(c => { champCounts[c.champion] = (champCounts[c.champion] || 0) + 1; });
           const dominant = Object.entries(champCounts).sort((a, b) => b[1] - a[1])[0];
-          const dominantChampion = dominant
-            ? eraChampions.find(c => c.champion === dominant[0])
-            : null;
-          const dominantColor = dominantChampion
-            ? CHAMPION_TEAM_COLORS[dominantChampion.team] || era.color
-            : era.color;
+          const dominantEntry = dominant ? eraChampions.find(c => c.champion === dominant[0]) : null;
+          const dominantColor = dominantEntry ? getChampionColor(dominantEntry) : era.color;
           return (
             <div key={era.id}>
-              <button onClick={() => setExpandedEra(isExpanded ? null : era.id)}
+              <button
+                onClick={() => setExpandedEra(isExpanded ? null : era.id)}
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 16px', borderRadius: 10,
                   background: isExpanded ? `${era.color}15` : 'var(--surface-hover)',
                   border: `1px solid ${isExpanded ? `${era.color}40` : 'var(--panel-border)'}`,
                   cursor: 'pointer', textAlign: 'left', fontFamily: "'Inter', sans-serif",
-                }}>
+                }}
+              >
                 <div style={{ width: 6, height: 36, borderRadius: 3, background: era.color, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     {era.name}
-                    <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 400, marginLeft: 8 }}>{era.years[0]}–{era.years[1]}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 400, marginLeft: 8 }}>
+                      {era.years[0]}–{era.years[1]}
+                    </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{era.description}</div>
                 </div>
                 <div style={{ textAlign: 'right', marginRight: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>{eraChampions.length}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>
+                    {eraChampions.length}
+                  </div>
                   <div style={{ fontSize: 9, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
                 </div>
               </button>
-              {isExpanded && (
-                <div style={{ padding: '12px 16px 12px 34px' }}>
+              {isExpanded && eraChampions.length > 0 && (
+                <div style={{ padding: '12px 16px 12px 34px', animation: 'fadeIn 0.2s ease' }}>
                   <div style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 8 }}>
                     {[...new Set(eraChampions.map(c => c.champion))].length} unique champions
-                    {dominant && <span> · Most dominant: <span style={{ color: dominantColor, fontWeight: 600 }}>{dominant[0]}</span> ({dominant[1]})</span>}
+                    {dominant && (
+                      <span>
+                        {' '}· Most dominant:{' '}
+                        <span style={{ color: dominantColor, fontWeight: 600 }}>{dominant[0]}</span>
+                        {' '}({dominant[1]})
+                      </span>
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                     {eraChampions.map(c => {
-                      const color = CHAMPION_TEAM_COLORS[c.team] || era.color;
+                      const color = getChampionColor(c);
                       return (
                         <div key={c.year} style={{
                           padding: '4px 10px', borderRadius: 6,
                           background: `${color}18`, border: `1px solid ${color}30`,
-                          fontSize: 11, color: '#ccc',
+                          fontSize: 11, color: 'var(--text-secondary)',
                         }}>
-                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color, marginRight: 6, fontSize: 10 }}>{c.year}</span>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 600, color, marginRight: 6, fontSize: 10,
+                          }}>{c.year}</span>
                           {c.champion}
                         </div>
                       );
                     })}
                   </div>
+                </div>
+              )}
+              {isExpanded && eraChampions.length === 0 && (
+                <div style={{ padding: '8px 16px 8px 34px', fontSize: 11, color: 'var(--text-soft)' }}>
+                  No championships in this era for the selected view.
                 </div>
               )}
             </div>
@@ -304,32 +288,39 @@ function EraSection({ champions }) {
 }
 
 /* ─── Records ─────────────────────────────────────────────────────────────── */
-function RecordCards() {
+function RecordCards({ mode }) {
+  const records = mode === 'constructors' ? CONSTRUCTOR_RECORDS : DRIVER_RECORDS;
   return (
     <Card>
       <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Records & Milestones</h3>
       <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 20 }}>The numbers that define F1 greatness</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {RECORDS.map((r, i) => (
-          <div key={i} style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12,
-            padding: '12px 14px', borderRadius: 10,
-            background: 'var(--surface-hover)', border: '1px solid var(--panel-border)',
-          }}>
+        {records.map((r, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex', alignItems: 'flex-start', gap: 12,
+              padding: '12px 14px', borderRadius: 10,
+              background: 'var(--surface-hover)', border: '1px solid var(--panel-border)',
+              transition: 'background 0.2s ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-soft)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+          >
             <div style={{
               width: 36, height: 36, borderRadius: 8,
               background: 'rgba(225, 6, 0, 0.1)', border: '1px solid rgba(225, 6, 0, 0.2)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              fontSize: 14,
+              fontSize: 16,
             }}>
-              {i === 0 ? '🏆' : i === 1 ? '🔥' : i === 2 ? '⚡' : i === 3 ? '⏱' : i === 4 ? '🎯' : '⭐'}
+              {r.icon}
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
                 <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{r.label}</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{r.value}</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{r.holders}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>{r.holders}</div>
             </div>
           </div>
         ))}
@@ -339,33 +330,70 @@ function RecordCards() {
 }
 
 /* ─── Titles Chart ────────────────────────────────────────────────────────── */
-function TitlesChart({ champions }) {
+function TitlesChart({ champions, mode }) {
   const titleCounts = useMemo(() => {
     const counts = {};
-    champions.forEach(c => counts[c.champion] = (counts[c.champion] || 0) + 1);
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 12);
+    champions.forEach(c => { counts[c.champion] = (counts[c.champion] || 0) + 1; });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
   }, [champions]);
+
   const MEDAL = ['#FFD700', '#C0C0C0', '#CD7F32'];
+
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Drivers by Title Count</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>
+        {mode === 'drivers' ? 'Drivers' : 'Constructors'} by Title Count
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {titleCounts.map((item, i) => {
           const pct = (item.count / titleCounts[0].count) * 100;
-          const color = i < 3 ? MEDAL[i] : '#e10600';
+          const barColor = i < 3 ? MEDAL[i] : 'var(--accent)';
           return (
             <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 width: 22, height: 22, borderRadius: '50%',
-                background: i < 3 ? color : '#222',
+                background: i < 3 ? barColor : 'var(--surface-hover)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: 700, color: i < 3 ? '#000' : '#888',
-              }}>{i + 1}</span>
-              <div style={{ width: 130, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
+                fontSize: 10, fontWeight: 700,
+                color: i < 3 ? '#000' : 'var(--text-muted)',
+                flexShrink: 0,
+              }}>
+                {i + 1}
+              </span>
+              <div style={{
+                width: 140, fontSize: 12, fontWeight: 600,
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {item.name}
+              </div>
               <div style={{ flex: 1, height: 20, background: 'var(--app-bg-alt)', borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
-                <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${color}CC, ${color}44)`, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8 }}>
-                  {pct > 20 && <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{item.count}</span>}
+                <div style={{
+                  height: '100%', width: `${pct}%`,
+                  background: `linear-gradient(90deg, ${i < 3 ? MEDAL[i] : '#e10600'}CC, ${i < 3 ? MEDAL[i] : '#e10600'}44)`,
+                  borderRadius: 4,
+                  display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8,
+                  transition: 'width 0.6s ease',
+                }}>
+                  {pct > 20 && (
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: "'JetBrains Mono', monospace" }}>
+                      {item.count}
+                    </span>
+                  )}
                 </div>
+                {pct <= 20 && (
+                  <span style={{
+                    position: 'absolute', left: `calc(${pct}% + 6px)`, top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 10, fontWeight: 700,
+                    color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {item.count}
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -379,31 +407,64 @@ function TitlesChart({ champions }) {
 function NationalityGrid({ champions }) {
   const counts = useMemo(() => {
     const map = {};
-    champions.forEach(c => map[c.nationality] = (map[c.nationality] || 0) + 1);
-    return Object.entries(map).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+    champions.forEach(c => { map[c.nationality] = (map[c.nationality] || 0) + 1; });
+    return Object.entries(map)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [champions]);
+
   const NAT_COLORS = {
-    British: '#012169', German: '#DD0000', Brazilian: '#009739', Finnish: '#003580', French: '#002395',
-    Argentine: '#74ACDF', Austrian: '#EF3340', Australian: '#00843D', Italian: '#009246', Spanish: '#AA151B',
-    Dutch: '#FF6F00', American: '#3C3B6E', 'South African': '#007A4D', Canadian: '#FF0000', 'New Zealander': '#000000',
+    British: '#012169', German: '#DD0000', Brazilian: '#009739',
+    Finnish: '#003580', French: '#002395', Argentine: '#74ACDF',
+    Austrian: '#EF3340', Australian: '#00843D', Italian: '#009246',
+    Spanish: '#AA151B', Dutch: '#FF6F00', American: '#3C3B6E',
+    'South African': '#007A4D', Canadian: '#FF0000', 'New Zealander': '#2B7A0B',
+    French: '#002395',
   };
+
   const total = counts.reduce((a, c) => a + c.count, 0);
+
   return (
     <Card>
-      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 16 }}>Championships by Nationality</h3>
+      <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
+        Championships by Nationality
+      </h3>
+      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 16 }}>
+        {counts.length} nationalities have produced a champion
+      </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {counts.map(c => {
-          const color = NAT_COLORS[c.name] || '#555';
+          const color = NAT_COLORS[c.name] || '#555555';
           const size = Math.max(56, 30 + (c.count / total) * 400);
           return (
-            <div key={c.name} style={{
-              width: size, height: size, maxWidth: 120, maxHeight: 120,
-              borderRadius: 10, background: `${color}25`, border: `1px solid ${color}50`,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: 6, cursor: 'default',
-            }}>
-              <span style={{ fontSize: size > 80 ? 22 : 16, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>{c.count}</span>
-              <span style={{ fontSize: 8, color: '#aaa', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.2 }}>{c.name}</span>
+            <div
+              key={c.name}
+              style={{
+                width: size, height: size, maxWidth: 120, maxHeight: 120,
+                borderRadius: 10,
+                background: `${color}25`, border: `1px solid ${color}50`,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                padding: 6, cursor: 'default',
+                transition: 'transform 0.2s ease',
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              title={`${c.name}: ${c.count} title${c.count !== 1 ? 's' : ''}`}
+            >
+              <span style={{
+                fontSize: size > 80 ? 22 : 15, fontWeight: 800,
+                color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {c.count}
+              </span>
+              <span style={{
+                fontSize: size > 70 ? 9 : 8, color: 'var(--text-muted)',
+                fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.3px',
+                textAlign: 'center', lineHeight: 1.2,
+              }}>
+                {c.name}
+              </span>
             </div>
           );
         })}
@@ -412,59 +473,80 @@ function NationalityGrid({ champions }) {
   );
 }
 
-/* ─── Main Preview ────────────────────────────────────────────────────────── */
-export default function ChampionshipHistoryPreview({ champions = DRIVER_CHAMPIONS }) {
+/* ─── Main Export ─────────────────────────────────────────────────────────── */
+export default function ChampionshipHistoryPreview({ champions = [], mode = 'drivers' }) {
   const titleCounts = useMemo(() => {
     const counts = {};
-    champions.forEach(c => counts[c.champion] = (counts[c.champion] || 0) + 1);
-    return Object.entries(counts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+    champions.forEach(c => { counts[c.champion] = (counts[c.champion] || 0) + 1; });
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }, [champions]);
+
   const mostTitles = titleCounts[0];
   const latest = champions[champions.length - 1];
 
+  if (!champions.length) return null;
+
   return (
-    <div style={{ background: 'transparent', minHeight: '100vh', padding: '0', color: 'var(--text-secondary)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+    <div style={{ color: 'var(--text-secondary)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <style>{`
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--app-bg-alt); }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
 
+      {/* Page header */}
       <div style={{ marginBottom: 8 }}>
         <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
           Championship History
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>{champions.length} seasons of the pinnacle of motorsport</p>
+        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+          {champions.length} seasons of the pinnacle of motorsport
+        </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, padding: '16px 0', marginBottom: 20, borderBottom: '1px solid var(--panel-border)' }}>
+      {/* Hero stats strip */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+        gap: 16, padding: '16px 0', marginBottom: 24,
+        borderBottom: '1px solid var(--panel-border)',
+      }}>
         {[
-          { label: 'Seasons', value: champions.length, color: '#FFD700' },
-          { label: 'Unique Champions', value: titleCounts.length, color: '#e10600' },
-          { label: 'Most Titles', value: `${mostTitles.name} (${mostTitles.count})`, color: '#27F4D2' },
-          { label: 'Reigning Champion', value: latest.champion, color: '#FF8000' },
+          { label: 'Seasons',           value: champions.length,                     color: '#FFD700', mono: true },
+          { label: 'Unique Champions',  value: titleCounts.length,                   color: '#e10600', mono: true },
+          { label: 'Most Titles',       value: `${mostTitles?.name} (${mostTitles?.count})`, color: '#27F4D2', mono: false },
+          { label: 'Reigning Champion', value: latest?.champion,                     color: '#FF8000', mono: false },
         ].map((s, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center' }} />
+            <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center', flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 10, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>{s.label}</div>
-              <div style={{ fontSize: typeof s.value === 'number' ? 20 : 13, fontWeight: 800, color: 'var(--text-primary)', fontFamily: typeof s.value === 'number' ? "'JetBrains Mono', monospace" : 'inherit' }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                {s.label}
+              </div>
+              <div style={{
+                fontSize: s.mono ? 20 : 13, fontWeight: 800,
+                color: 'var(--text-primary)',
+                fontFamily: s.mono ? "'JetBrains Mono', monospace" : 'inherit',
+              }}>
+                {s.value}
+              </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* Dominance Timeline */}
       <div style={{ marginBottom: 24 }}>
-        <DominanceTimeline champions={champions} />
+        <DominanceTimeline champions={champions} mode={mode} />
       </div>
 
+      {/* Titles + Records */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
-        <TitlesChart champions={champions} />
-        <RecordCards />
+        <TitlesChart champions={champions} mode={mode} />
+        <RecordCards mode={mode} />
       </div>
 
+      {/* Eras + Nationality */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
         <EraSection champions={champions} />
         <NationalityGrid champions={champions} />

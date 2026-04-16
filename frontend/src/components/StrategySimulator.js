@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { Timer, Plus, Trash2, Settings, Zap, AlertTriangle } from 'lucide-react';
 import { TIRE_COMPOUNDS } from '../data/constants';
+import RealTireData from './RealTireData';
 
 /* ─── Tire Physics Model ──────────────────────────────────────────────────── */
 function simulateLapTime({
@@ -524,6 +525,9 @@ export default function StrategySimulator() {
           </ResponsiveContainer>
         </Card>
       </div>
+
+      {/* Real Tire Degradation Analysis */}
+      <RealTireData />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { getDriverColor } from '../data/constants';
 import { TIRE_COMPOUNDS } from '../data/constants';
 import { Activity, Loader, Radio, Gauge } from 'lucide-react';
 import { getFlag } from '../data/flags';
+import SectorAnalysis from './SectorAnalysis';
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -375,6 +376,11 @@ export default function TelemetryViewer() {
           </div>
         </Card>
       )}
+
+      {/* Sector-Level Driver Comparison */}
+      <div style={{ marginTop: 24 }}>
+        <SectorAnalysis />
+      </div>
     </div>
   );
 }

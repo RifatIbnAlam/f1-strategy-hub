@@ -4,12 +4,14 @@ import StrategySimulator from './components/StrategySimulator';
 import DriverComparison from './components/DriverComparison';
 import TelemetryViewer from './components/TelemetryViewer';
 import ChampionshipHistory from './components/ChampionshipHistory';
+import RaceFlow from './components/RaceFlow';
 import {
   LayoutDashboard,
   GitCompare,
   Timer,
   Activity,
   Trophy,
+  TrendingUp,
   Github,
   Gauge,
   Menu,
@@ -176,6 +178,7 @@ const VIEWS = [
   { id: 'strategy', label: 'Strategy Sim', icon: Timer },
   { id: 'comparison', label: 'Driver Compare', icon: GitCompare },
   { id: 'telemetry', label: 'Telemetry', icon: Activity },
+  { id: 'raceflow', label: 'Race Flow', icon: TrendingUp },
   { id: 'history', label: 'Championships', icon: Trophy },
 ];
 
@@ -211,6 +214,7 @@ export default function App() {
       case 'strategy': return <StrategySimulator />;
       case 'comparison': return <DriverComparison />;
       case 'telemetry': return <TelemetryViewer />;
+      case 'raceflow': return <RaceFlow />;
       case 'history': return <ChampionshipHistory />;
       default: return <Dashboard />;
     }

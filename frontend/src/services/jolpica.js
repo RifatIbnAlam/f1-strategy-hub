@@ -90,11 +90,15 @@ export async function getConstructorStandings(year = 'current', round = null) {
 // ─── Qualifying ───────────────────────────────────────────────────────────────
 
 /**
- * Get qualifying results
+ * Get qualifying results (single round or full season)
  */
-export async function getQualifyingResults(year, round) {
-  const data = await fetchJolpica(`/${year}/${round}/qualifying`);
-  return data?.RaceTable?.Races?.[0]?.QualifyingResults || [];
+export async function getQualifyingResults(year, round = null) {
+  if (round) {
+    const data = await fetchJolpica(`/${year}/${round}/qualifying`);
+    return data?.RaceTable?.Races?.[0]?.QualifyingResults || [];
+  }
+  const data = await fetchJolpica(`/${year}/qualifying?limit=600`);
+  return data?.RaceTable?.Races || [];
 }
 
 // ─── Driver & Constructor Info ────────────────────────────────────────────────

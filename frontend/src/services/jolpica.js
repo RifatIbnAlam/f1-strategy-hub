@@ -40,7 +40,7 @@ async function fetchJolpica(path) {
  * Get the race schedule for a season
  */
 export async function getSchedule(year = 'current') {
-  const data = await fetchJolpica(`/${year}`);
+  const data = await fetchJolpica(`/${year}?limit=100`);
   return data?.RaceTable?.Races || [];
 }
 
@@ -50,7 +50,7 @@ export async function getSchedule(year = 'current') {
  * Get results for a specific race or all races in a season
  */
 export async function getRaceResults(year, round = null) {
-  const path = round ? `/${year}/${round}/results` : `/${year}/results`;
+  const path = round ? `/${year}/${round}/results` : `/${year}/results?limit=1000`;
   const data = await fetchJolpica(path);
   return data?.RaceTable?.Races || [];
 }
@@ -107,7 +107,7 @@ export async function getQualifyingResults(year, round = null) {
  * Get all drivers for a season
  */
 export async function getDriversForSeason(year = 'current') {
-  const data = await fetchJolpica(`/${year}/drivers`);
+  const data = await fetchJolpica(`/${year}/drivers?limit=100`);
   return data?.DriverTable?.Drivers || [];
 }
 
@@ -115,7 +115,7 @@ export async function getDriversForSeason(year = 'current') {
  * Get all constructors for a season
  */
 export async function getConstructors(year = 'current') {
-  const data = await fetchJolpica(`/${year}/constructors`);
+  const data = await fetchJolpica(`/${year}/constructors?limit=100`);
   return data?.ConstructorTable?.Constructors || [];
 }
 
@@ -126,8 +126,8 @@ export async function getConstructors(year = 'current') {
  */
 export async function getLapTimes(year, round, lapNumber = null) {
   const path = lapNumber
-    ? `/${year}/${round}/laps/${lapNumber}`
-    : `/${year}/${round}/laps`;
+    ? `/${year}/${round}/laps/${lapNumber}?limit=1000`
+    : `/${year}/${round}/laps?limit=1000`;
   const data = await fetchJolpica(path);
   return data?.RaceTable?.Races?.[0]?.Laps || [];
 }
@@ -138,7 +138,7 @@ export async function getLapTimes(year, round, lapNumber = null) {
  * Get pit stop data for a race
  */
 export async function getPitStops(year, round) {
-  const data = await fetchJolpica(`/${year}/${round}/pitstops`);
+  const data = await fetchJolpica(`/${year}/${round}/pitstops?limit=100`);
   return data?.RaceTable?.Races?.[0]?.PitStops || [];
 }
 

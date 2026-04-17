@@ -6,7 +6,6 @@ import TelemetryViewer from './components/TelemetryViewer';
 import ChampionshipHistory from './components/ChampionshipHistory';
 import RaceFlow from './components/RaceFlow';
 import UndercutAnalyzer from './components/UndercutAnalyzer';
-import SafetyCarModel from './components/SafetyCarModel';
 import {
   LayoutDashboard,
   GitCompare,
@@ -15,7 +14,6 @@ import {
   Trophy,
   TrendingUp,
   ArrowDownUp,
-  ShieldAlert,
   Github,
   Gauge,
   Menu,
@@ -184,7 +182,6 @@ const VIEWS = [
   { id: 'telemetry', label: 'Telemetry', icon: Activity },
   { id: 'raceflow', label: 'Race Flow', icon: TrendingUp },
   { id: 'undercut', label: 'Undercut Analyzer', icon: ArrowDownUp },
-  { id: 'safetycar', label: 'SC Model', icon: ShieldAlert },
   { id: 'history', label: 'Championships', icon: Trophy },
 ];
 
@@ -222,7 +219,6 @@ export default function App() {
       case 'telemetry': return <TelemetryViewer />;
       case 'raceflow': return <RaceFlow />;
       case 'undercut': return <UndercutAnalyzer />;
-      case 'safetycar': return <SafetyCarModel />;
       case 'history': return <ChampionshipHistory />;
       default: return <Dashboard />;
     }

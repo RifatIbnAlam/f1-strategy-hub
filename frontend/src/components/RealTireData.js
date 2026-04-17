@@ -178,7 +178,7 @@ export default function RealTireData() {
           <label style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>YEAR</label>
           <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSessionKey(null); setDriverNum(null); }}
             style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
-            {[2026, 2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
+            {Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         <div>

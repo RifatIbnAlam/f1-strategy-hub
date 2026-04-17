@@ -122,14 +122,46 @@ export async function getConstructors(year = 'current') {
 // ─── Lap Times ────────────────────────────────────────────────────────────────
 
 /**
- * Get lap times for a specific race
+ * Get lap times for a specific race.
+ * The API paginates on individual Timing entries (not Laps), so a 57-lap
+ * race with 20 drivers = 1140 entries. We auto-paginate and merge any laps
+ * that get split across page boundaries.
  */
 export async function getLapTimes(year, round, lapNumber = null) {
-  const path = lapNumber
-    ? `/${year}/${round}/laps/${lapNumber}?limit=1000`
-    : `/${year}/${round}/laps?limit=1000`;
-  const data = await fetchJolpica(path);
-  return data?.RaceTable?.Races?.[0]?.Laps || [];
+  if (lapNumber) {
+    const data = await fetchJolpica(`/${year}/${round}/laps/${lapNumber}?limit=1000`);
+    return data?.RaceTable?.Races?.[0]?.Laps || [];
+  }
+
+  const PAGE = 1000;
+  let allLaps = [];
+  let offset = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const data = await fetchJolpica(
+      `/${year}/${round}/laps?limit=${PAGE}&offset=${offset}`
+    );
+    const laps = data?.RaceTable?.Races?.[0]?.Laps || [];
+    const total = parseInt(data?.total) || 0;
+
+    if (!laps.length) break;
+
+    // Merge — a single lap's Timings can span two pages
+    for (const lap of laps) {
+      const existing = allLaps.find(l => l.number === lap.number);
+      if (existing) {
+        existing.Timings = [...(existing.Timings || []), ...(lap.Timings || [])];
+      } else {
+        allLaps.push({ ...lap, Timings: [...(lap.Timings || [])] });
+      }
+    }
+
+    offset += PAGE;
+    if (offset >= total || total === 0) break;
+  }
+
+  return allLaps;
 }
 
 // ─── Pit Stops ────────────────────────────────────────────────────────────────

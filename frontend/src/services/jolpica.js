@@ -12,6 +12,30 @@ const BASE_URL = 'https://api.jolpi.ca/ergast/f1';
 const cache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 min (historical data changes rarely)
 
+/**
+ * Paginate through a Jolpica endpoint (max limit per request = 100).
+ * Returns all collected MRData responses merged into one array.
+ * `extractFn(MRData)` should return the array of items from each page.
+ */
+async function fetchAllPages(basePath, extractFn) {
+  const PAGE = 100;
+  let all = [];
+  let offset = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const sep = basePath.includes('?') ? '&' : '?';
+    const data = await fetchJolpica(`${basePath}${sep}limit=${PAGE}&offset=${offset}`);
+    const items = extractFn(data) || [];
+    const total = parseInt(data?.total) || 0;
+
+    all = all.concat(items);
+    offset += PAGE;
+    if (!items.length || offset >= total || total === 0) break;
+  }
+  return all;
+}
+
 async function fetchJolpica(path) {
   const [pathname, queryString] = path.split('?');
   const url = `${BASE_URL}${pathname}.json${queryString ? `?${queryString}` : ''}`;
@@ -50,9 +74,25 @@ export async function getSchedule(year = 'current') {
  * Get results for a specific race or all races in a season
  */
 export async function getRaceResults(year, round = null) {
-  const path = round ? `/${year}/${round}/results` : `/${year}/results?limit=1000`;
-  const data = await fetchJolpica(path);
-  return data?.RaceTable?.Races || [];
+  if (round) {
+    const data = await fetchJolpica(`/${year}/${round}/results?limit=100`);
+    return data?.RaceTable?.Races || [];
+  }
+  // Full season: 24 races × 20 results = 480 entries — needs pagination
+  const allResults = await fetchAllPages(
+    `/${year}/results`,
+    data => data?.RaceTable?.Races || []
+  );
+  // Merge races — same race can span multiple pages
+  const merged = {};
+  for (const race of allResults) {
+    if (!merged[race.round]) {
+      merged[race.round] = { ...race, Results: [...(race.Results || [])] };
+    } else {
+      merged[race.round].Results.push(...(race.Results || []));
+    }
+  }
+  return Object.values(merged).sort((a, b) => parseInt(a.round) - parseInt(b.round));
 }
 
 /**
@@ -94,11 +134,23 @@ export async function getConstructorStandings(year = 'current', round = null) {
  */
 export async function getQualifyingResults(year, round = null) {
   if (round) {
-    const data = await fetchJolpica(`/${year}/${round}/qualifying`);
+    const data = await fetchJolpica(`/${year}/${round}/qualifying?limit=100`);
     return data?.RaceTable?.Races?.[0]?.QualifyingResults || [];
   }
-  const data = await fetchJolpica(`/${year}/qualifying?limit=600`);
-  return data?.RaceTable?.Races || [];
+  // Full season: 24 races × 20 drivers = 480 entries — needs pagination
+  const allResults = await fetchAllPages(
+    `/${year}/qualifying`,
+    data => data?.RaceTable?.Races || []
+  );
+  const merged = {};
+  for (const race of allResults) {
+    if (!merged[race.round]) {
+      merged[race.round] = { ...race, QualifyingResults: [...(race.QualifyingResults || [])] };
+    } else {
+      merged[race.round].QualifyingResults.push(...(race.QualifyingResults || []));
+    }
+  }
+  return Object.values(merged).sort((a, b) => parseInt(a.round) - parseInt(b.round));
 }
 
 // ─── Driver & Constructor Info ────────────────────────────────────────────────
@@ -129,11 +181,13 @@ export async function getConstructors(year = 'current') {
  */
 export async function getLapTimes(year, round, lapNumber = null) {
   if (lapNumber) {
-    const data = await fetchJolpica(`/${year}/${round}/laps/${lapNumber}?limit=1000`);
+    const data = await fetchJolpica(`/${year}/${round}/laps/${lapNumber}?limit=100`);
     return data?.RaceTable?.Races?.[0]?.Laps || [];
   }
 
-  const PAGE = 1000;
+  // Jolpica API max limit is 100 and it paginates on Timing entries
+  // (not Laps). A 57-lap race × 20 drivers = 1140 entries → 12 pages.
+  const PAGE = 100;
   let allLaps = [];
   let offset = 0;
 

@@ -20,7 +20,7 @@ export default function ChampionshipHistory() {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 20px', borderRadius: 8,
-              background: tab === t.id ? 'var(--accent-soft)' : 'var(--surface-hover)',
+              background: tab === t.id ? 'var(--accent-soft)' : 'var(--app-bg-alt)',
               border: `1px solid ${tab === t.id ? 'var(--accent-border)' : 'var(--panel-border)'}`,
               color: tab === t.id ? 'var(--text-primary)' : 'var(--text-muted)',
               cursor: 'pointer', fontSize: 13, fontWeight: 600,

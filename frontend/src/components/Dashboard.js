@@ -28,7 +28,7 @@ const SectionTitle = ({ icon: Icon, title, subtitle }) => (
       {Icon && <Icon size={18} color="var(--accent)" />}
       <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>{title}</h2>
     </div>
-    {subtitle && <p style={{ fontSize: 12, color: 'var(--text-soft)', marginLeft: Icon ? 28 : 0 }}>{subtitle}</p>}
+    {subtitle && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: Icon ? 28 : 0 }}>{subtitle}</p>}
   </div>
 );
 
@@ -58,10 +58,10 @@ const StatCard = ({ label, value, icon: Icon, color = '#e10600', sub }) => (
     <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
       {value}
     </div>
-    <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
+    <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
       {label}
     </div>
-    {sub && <div style={{ fontSize: 11, color, marginTop: 4 }}>{sub}</div>}
+    {sub && <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 4 }}>{sub}</div>}
   </Card>
 );
 
@@ -81,9 +81,9 @@ const StandingRow = ({ position, name, points, team, color, isFirst, nationality
   >
     <span style={{
       width: 28, height: 28, borderRadius: '50%',
-      background: isFirst ? 'var(--accent)' : 'var(--surface-hover)',
+      background: isFirst ? 'var(--accent)' : 'var(--app-bg-alt)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 12, fontWeight: 700, color: isFirst ? '#fff' : 'var(--text-muted)',
+      fontSize: 12, fontWeight: 700, color: isFirst ? '#fff' : 'var(--text-secondary)',
       fontFamily: "'JetBrains Mono', monospace",
     }}>
       {position}
@@ -100,7 +100,7 @@ const StandingRow = ({ position, name, points, team, color, isFirst, nationality
       fontFamily: "'JetBrains Mono', monospace",
     }}>
       {points}
-      <span style={{ fontSize: 10, color: 'var(--text-soft)', marginLeft: 4 }}>PTS</span>
+      <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 4 }}>PTS</span>
     </span>
   </div>
 );
@@ -113,7 +113,7 @@ const RaceItem = ({ race, isPast }) => {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '8px 12px',
-      opacity: isPast ? 0.5 : 1,
+      opacity: isPast ? 0.7 : 1,
       borderRadius: 6,
     }}>
       <div style={{
@@ -123,7 +123,7 @@ const RaceItem = ({ race, isPast }) => {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         border: isPast ? '1px solid var(--panel-border)' : '1px solid var(--accent-border)',
       }}>
-        <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? 'var(--text-soft)' : 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
+        <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
           {date.getDate()}
         </span>
         <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--accent)', letterSpacing: '1px' }}>
@@ -131,10 +131,10 @@ const RaceItem = ({ race, isPast }) => {
         </span>
       </div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: isPast ? 'var(--text-soft)' : 'var(--text-primary)' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--text-primary)' }}>
           {race.raceName}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
           {race.Circuit?.circuitName}
         </div>
       </div>
@@ -143,7 +143,7 @@ const RaceItem = ({ race, isPast }) => {
         padding: '3px 8px',
         borderRadius: 4,
         background: isPast ? 'var(--app-bg-alt)' : 'var(--accent-soft)',
-        color: isPast ? 'var(--text-soft)' : 'var(--accent)',
+        color: isPast ? 'var(--text-muted)' : 'var(--accent)',
       }}>
         R{race.round}
       </span>
@@ -188,7 +188,7 @@ export default function Dashboard() {
         }}>
           F1 Analytics Dashboard
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           Live data from the {currentYear} Formula 1 World Championship
         </p>
         {latestSession && (
@@ -345,9 +345,9 @@ export default function Dashboard() {
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '8px 12px',
                   borderRadius: 6,
-                  background: i < 3 ? 'rgba(255, 215, 0, 0.04)' : 'transparent',
+                  background: i < 3 ? 'var(--accent-soft)' : 'transparent',
                   borderLeft: `3px solid ${
-                    i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--panel-border)'
+                    i === 0 ? '#D4A800' : i === 1 ? '#8A8A8A' : i === 2 ? '#A66628' : 'var(--panel-border)'
                   }`,
                 }}>
                   <span style={{
@@ -362,11 +362,11 @@ export default function Dashboard() {
                       {r.Driver?.givenName} {r.Driver?.familyName}
                     </span>
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>
                     {r.Time?.time || r.status}
                   </span>
                   <span style={{
-                    fontSize: 11, fontWeight: 600, color: '#FFD700',
+                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     +{r.points}

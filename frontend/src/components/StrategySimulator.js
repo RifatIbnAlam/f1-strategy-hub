@@ -110,7 +110,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
   <div style={{
     display: 'flex', alignItems: 'center', gap: 12,
     padding: '12px 16px',
-    background: 'var(--surface-hover)',
+    background: 'var(--app-bg-alt)',
     borderRadius: 8,
     borderLeft: `4px solid ${TIRE_COMPOUNDS[stint.compound].color}`,
   }}>
@@ -136,7 +136,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
       ))}
     </select>
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 11, color: 'var(--text-soft)' }}>Laps:</span>
+      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Laps:</span>
       <input
         type="range"
         min={1}
@@ -320,7 +320,7 @@ export default function StrategySimulator() {
           <Timer size={28} color="var(--accent)" />
           Race Strategy Simulator
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           Model tire degradation, pit windows, and race pace to find the optimal strategy
         </p>
       </div>
@@ -387,7 +387,7 @@ export default function StrategySimulator() {
                 <div>
                   <span style={{ fontSize: 16, fontWeight: 700, color: strat.color }}>{strat.name}</span>
                   <span style={{
-                    fontSize: 11, color: 'var(--text-soft)', marginLeft: 8,
+                    fontSize: 11, color: 'var(--text-muted)', marginLeft: 8,
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     {strat.stints.length - 1} stop{strat.stints.length > 2 ? 's' : ''}
@@ -429,7 +429,7 @@ export default function StrategySimulator() {
                 {strat.stints.length < 4 && (
                   <button onClick={() => addStint(si)} style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    padding: '8px 16px', background: 'var(--surface-hover)',
+                    padding: '8px 16px', background: 'var(--app-bg-alt)',
                     border: '1px dashed var(--input-border)', borderRadius: 8,
                     color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -475,8 +475,8 @@ export default function StrategySimulator() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-              <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
-              <YAxis stroke="var(--text-soft)" fontSize={11} domain={['auto', 'auto']}
+              <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} domain={['auto', 'auto']}
                 tickFormatter={v => `${v.toFixed(1)}s`} />
               <Tooltip
                 contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
@@ -506,8 +506,8 @@ export default function StrategySimulator() {
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={gapData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-              <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
-              <YAxis stroke="var(--text-soft)" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
+              <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
               <Tooltip
                 contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
                 labelFormatter={l => `Lap ${l}`}

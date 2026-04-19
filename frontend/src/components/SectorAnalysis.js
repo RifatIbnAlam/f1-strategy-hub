@@ -154,11 +154,11 @@ export default function SectorAnalysis() {
         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
           Sector-Level Driver Comparison
         </span>
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 8px', background: 'var(--surface-hover)', borderRadius: 4 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 8px', background: 'var(--app-bg-alt)', borderRadius: 4 }}>
           OpenF1 Data · 2023+
         </span>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-soft)', marginBottom: 16 }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
         Compare two drivers sector by sector — see exactly where time is gained or lost
       </p>
 
@@ -292,8 +292,8 @@ export default function SectorAnalysis() {
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={sectorData.cumulativeData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }} barGap={0}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-                  <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={10} />
-                  <YAxis stroke="var(--text-soft)" fontSize={10} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
+                  <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={10} />
+                  <YAxis stroke="var(--text-muted)" fontSize={10} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
                   <Tooltip
                     contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 11 }}
                     labelFormatter={l => `After Lap ${l}`}
@@ -302,9 +302,9 @@ export default function SectorAnalysis() {
                       return [`${v > 0 ? '+' : ''}${v.toFixed(3)}s`, label];
                     }}
                   />
-                  <ReferenceLine y={0} stroke="var(--text-soft)" />
+                  <ReferenceLine y={0} stroke="var(--text-muted)" />
                   <Bar dataKey="s1" stackId="sectors" fill="#FF1E1E" opacity={0.7} name="s1" />
-                  <Bar dataKey="s2" stackId="sectors" fill="#FFD700" opacity={0.7} name="s2" />
+                  <Bar dataKey="s2" stackId="sectors" fill="#D4A800" opacity={0.7} name="s2" />
                   <Bar dataKey="s3" stackId="sectors" fill="#00FF87" opacity={0.7} name="s3" />
                 </BarChart>
               </ResponsiveContainer>
@@ -322,7 +322,7 @@ export default function SectorAnalysis() {
               return (
                 <div key={s.sector} style={{
                   padding: 12, borderRadius: 8, textAlign: 'center',
-                  background: 'var(--surface-hover)',
+                  background: 'var(--app-bg-alt)',
                   border: `1px solid ${winColor}30`,
                 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{s.sector}</div>
@@ -354,7 +354,7 @@ export default function SectorAnalysis() {
       )}
 
       {!sectorData && bothSelected && !loading && (
-        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-soft)', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>
           No sector data available for this combination. Try a different race.
         </div>
       )}

@@ -159,7 +159,7 @@ export default function RaceFlow() {
           <TrendingUp size={28} color="var(--accent)" />
           Race Position Flow
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           Lap-by-lap position changes — see overtakes, pit strategy effects, and race dynamics unfold
         </p>
       </div>
@@ -232,9 +232,9 @@ export default function RaceFlow() {
                 {results.slice(0, 3).map((r, i) => (
                   <span key={r.Driver?.driverId} style={{
                     padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
-                    background: i === 0 ? 'rgba(255,215,0,0.15)' : i === 1 ? 'rgba(192,192,192,0.15)' : 'rgba(205,127,50,0.15)',
-                    color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32',
-                    border: `1px solid ${i === 0 ? 'rgba(255,215,0,0.3)' : i === 1 ? 'rgba(192,192,192,0.3)' : 'rgba(205,127,50,0.3)'}`,
+                    background: i === 0 ? 'rgba(212,168,0,0.15)' : i === 1 ? 'rgba(138,138,138,0.15)' : 'rgba(166,102,40,0.15)',
+                    color: i === 0 ? '#D4A800' : i === 1 ? '#8A8A8A' : '#A66628',
+                    border: `1px solid ${i === 0 ? 'rgba(212,168,0,0.35)' : i === 1 ? 'rgba(138,138,138,0.35)' : 'rgba(166,102,40,0.35)'}`,
                   }}>
                     P{i + 1} {getFlag(r.Driver?.nationality)} {r.Driver?.code || r.Driver?.familyName?.substring(0, 3).toUpperCase()}
                   </span>
@@ -266,13 +266,13 @@ export default function RaceFlow() {
               <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
                 <XAxis
-                  dataKey="lap" stroke="var(--text-soft)" fontSize={11}
+                  dataKey="lap" stroke="var(--text-muted)" fontSize={11}
                   tickFormatter={v => v === 0 ? 'G' : v}
                 />
                 <YAxis
                   reversed domain={[1, showTop10Only ? 10 : 20]}
                   ticks={showTop10Only ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [1, 5, 10, 15, 20]}
-                  stroke="var(--text-soft)" fontSize={11}
+                  stroke="var(--text-muted)" fontSize={11}
                   tickFormatter={v => `P${v}`}
                 />
                 <Tooltip content={<CustomTooltip />} />
@@ -369,7 +369,7 @@ export default function RaceFlow() {
                       <span style={{ fontSize: 12, color: 'var(--text-secondary)', width: 40 }}>
                         {getFlag(d.nationality)} {d.code}
                       </span>
-                      <div style={{ flex: 1, height: 6, background: 'var(--surface-hover)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ flex: 1, height: 6, background: 'var(--app-bg-alt)', borderRadius: 3, overflow: 'hidden' }}>
                         <div style={{
                           height: '100%', borderRadius: 3,
                           width: `${(d.overtakes / maxOvertakes) * 100}%`,

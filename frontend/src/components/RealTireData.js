@@ -164,11 +164,11 @@ export default function RealTireData() {
         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
           Real Tire Degradation Analysis
         </span>
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 8px', background: 'var(--surface-hover)', borderRadius: 4 }}>
+        <span style={{ fontSize: 10, color: 'var(--text-muted)', padding: '2px 8px', background: 'var(--app-bg-alt)', borderRadius: 4 }}>
           OpenF1 Data · 2023+
         </span>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-soft)', marginBottom: 16 }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
         Analyze real stint degradation rates from actual race data — compare with the simulation model above
       </p>
 
@@ -224,9 +224,9 @@ export default function RealTireData() {
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-                <XAxis dataKey="lap" type="number" stroke="var(--text-soft)" fontSize={10}
-                  label={{ value: 'Lap', position: 'insideBottom', offset: -2, fill: 'var(--text-soft)', fontSize: 10 }} />
-                <YAxis stroke="var(--text-soft)" fontSize={10} domain={['auto', 'auto']}
+                <XAxis dataKey="lap" type="number" stroke="var(--text-muted)" fontSize={10}
+                  label={{ value: 'Lap', position: 'insideBottom', offset: -2, fill: 'var(--text-muted)', fontSize: 10 }} />
+                <YAxis stroke="var(--text-muted)" fontSize={10} domain={['auto', 'auto']}
                   tickFormatter={v => `${v.toFixed(1)}s`} />
                 <Tooltip
                   contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 11 }}
@@ -259,7 +259,7 @@ export default function RealTireData() {
               return (
                 <div key={i} style={{
                   padding: 14, borderRadius: 8,
-                  background: 'var(--surface-hover)',
+                  background: 'var(--app-bg-alt)',
                   borderLeft: `4px solid ${compColor}`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -283,7 +283,7 @@ export default function RealTireData() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Degradation</span>
                       <span style={{
-                        color: stint.degradation > 0.08 ? 'var(--accent)' : stint.degradation > 0.04 ? '#FFD700' : '#27F4D2',
+                        color: stint.degradation > 0.08 ? 'var(--accent)' : stint.degradation > 0.04 ? '#D4A800' : '#27F4D2',
                         fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {stint.degradation > 0 ? '+' : ''}{stint.degradation.toFixed(3)} s/lap
@@ -298,7 +298,7 @@ export default function RealTireData() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Fit R²</span>
                       <span style={{
-                        color: stint.r2 > 0.7 ? '#27F4D2' : stint.r2 > 0.4 ? '#FFD700' : 'var(--text-muted)',
+                        color: stint.r2 > 0.7 ? '#27F4D2' : stint.r2 > 0.4 ? '#D4A800' : 'var(--text-muted)',
                         fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {stint.r2.toFixed(3)}
@@ -327,7 +327,7 @@ export default function RealTireData() {
       )}
 
       {!analysis && sessionKey && driverNum && !loading && (
-        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-soft)', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>
           No stint data available for this selection. Try a different race or driver.
         </div>
       )}

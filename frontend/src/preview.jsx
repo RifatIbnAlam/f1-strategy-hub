@@ -112,7 +112,7 @@ function DominanceTimeline({ champions, mode }) {
           <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
             {mode === 'drivers' ? 'Driver' : 'Constructor'} Dominance Timeline
           </h3>
-          <p style={{ fontSize: 11, color: 'var(--text-soft)', margin: '4px 0 0' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '4px 0 0' }}>
             Every championship since {champions[0]?.year}. Hover to explore — dynasties form visible colour streaks.
           </p>
         </div>
@@ -180,7 +180,7 @@ function DominanceTimeline({ champions, mode }) {
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '4px 10px', borderRadius: 6,
-                background: selectedChampion === s.champion ? `${color}33` : 'var(--surface-hover)',
+                background: selectedChampion === s.champion ? `${color}33` : 'var(--app-bg-alt)',
                 border: `1px solid ${selectedChampion === s.champion ? color : 'var(--panel-border)'}`,
                 cursor: 'pointer', color: 'var(--text-secondary)',
                 fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif",
@@ -188,7 +188,7 @@ function DominanceTimeline({ champions, mode }) {
             >
               <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
               {s.champion}
-              <span style={{ color: 'var(--text-soft)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
+              <span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
                 {s.count}× ({s.start}{s.end !== s.start ? `–${s.end}` : ''})
               </span>
             </button>
@@ -205,7 +205,7 @@ function EraSection({ champions }) {
   return (
     <Card>
       <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>The Eras of Formula 1</h3>
-      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 20 }}>75 years of evolution, revolution, and rivalry</p>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20 }}>75 years of evolution, revolution, and rivalry</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {F1_ERAS.map(era => {
           const eraChampions = champions.filter(c => c.year >= era.years[0] && c.year <= era.years[1]);
@@ -222,7 +222,7 @@ function EraSection({ champions }) {
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                   padding: '12px 16px', borderRadius: 10,
-                  background: isExpanded ? `${era.color}15` : 'var(--surface-hover)',
+                  background: isExpanded ? `${era.color}15` : 'var(--app-bg-alt)',
                   border: `1px solid ${isExpanded ? `${era.color}40` : 'var(--panel-border)'}`,
                   cursor: 'pointer', textAlign: 'left', fontFamily: "'Inter', sans-serif",
                 }}
@@ -231,7 +231,7 @@ function EraSection({ champions }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     {era.name}
-                    <span style={{ fontSize: 11, color: 'var(--text-soft)', fontWeight: 400, marginLeft: 8 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>
                       {era.years[0]}–{era.years[1]}
                     </span>
                   </div>
@@ -241,12 +241,12 @@ function EraSection({ champions }) {
                   <div style={{ fontSize: 16, fontWeight: 800, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>
                     {eraChampions.length}
                   </div>
-                  <div style={{ fontSize: 9, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
+                  <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
                 </div>
               </button>
               {isExpanded && eraChampions.length > 0 && (
                 <div style={{ padding: '12px 16px 12px 34px', animation: 'fadeIn 0.2s ease' }}>
-                  <div style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 8 }}>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>
                     {[...new Set(eraChampions.map(c => c.champion))].length} unique champions
                     {dominant && (
                       <span>
@@ -277,7 +277,7 @@ function EraSection({ champions }) {
                 </div>
               )}
               {isExpanded && eraChampions.length === 0 && (
-                <div style={{ padding: '8px 16px 8px 34px', fontSize: 11, color: 'var(--text-soft)' }}>
+                <div style={{ padding: '8px 16px 8px 34px', fontSize: 11, color: 'var(--text-muted)' }}>
                   No championships in this era for the selected view.
                 </div>
               )}
@@ -295,7 +295,7 @@ function RecordCards({ mode }) {
   return (
     <Card>
       <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Records & Milestones</h3>
-      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 20 }}>The numbers that define F1 greatness</p>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20 }}>The numbers that define F1 greatness</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {records.map((r, i) => (
           <div
@@ -303,11 +303,11 @@ function RecordCards({ mode }) {
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 12,
               padding: '12px 14px', borderRadius: 10,
-              background: 'var(--surface-hover)', border: '1px solid var(--panel-border)',
+              background: 'var(--app-bg-alt)', border: '1px solid var(--panel-border)',
               transition: 'background 0.2s ease',
             }}
             onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-soft)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--app-bg-alt)'}
           >
             <div style={{
               width: 36, height: 36, borderRadius: 8,
@@ -342,7 +342,7 @@ function TitlesChart({ champions, mode }) {
       .slice(0, 12);
   }, [champions]);
 
-  const MEDAL = ['#FFD700', '#C0C0C0', '#CD7F32'];
+  const MEDAL = ['#D4A800', '#8A8A8A', '#A66628'];
 
   return (
     <Card>
@@ -357,7 +357,7 @@ function TitlesChart({ champions, mode }) {
             <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{
                 width: 22, height: 22, borderRadius: '50%',
-                background: i < 3 ? barColor : 'var(--surface-hover)',
+                background: i < 3 ? barColor : 'var(--app-bg-alt)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10, fontWeight: 700,
                 color: i < 3 ? '#000' : 'var(--text-muted)',
@@ -430,7 +430,7 @@ function NationalityGrid({ champions }) {
       <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>
         Championships by Nationality
       </h3>
-      <p style={{ fontSize: 11, color: 'var(--text-soft)', marginBottom: 16 }}>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 16 }}>
         {counts.length} nationalities have produced a champion
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -503,7 +503,7 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
         <h1 style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px' }}>
           Championship History
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           {champions.length} seasons of the pinnacle of motorsport
         </p>
       </div>
@@ -516,7 +516,7 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
         borderBottom: '1px solid var(--panel-border)',
       }}>
         {[
-          { label: 'Seasons',           value: champions.length,                     color: '#FFD700', mono: true },
+          { label: 'Seasons',           value: champions.length,                     color: '#D4A800', mono: true },
           { label: 'Unique Champions',  value: titleCounts.length,                   color: '#e10600', mono: true },
           { label: 'Most Titles',       value: `${mostTitles?.name} (${mostTitles?.count})`, color: '#27F4D2', mono: false },
           { label: 'Reigning Champion', value: latest?.champion,                     color: '#FF8000', mono: false },
@@ -524,7 +524,7 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center', flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: 10, color: 'var(--text-soft)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
                 {s.label}
               </div>
               <div style={{

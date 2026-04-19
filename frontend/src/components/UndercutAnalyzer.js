@@ -237,7 +237,7 @@ export default function UndercutAnalyzer() {
           <ArrowDownUp size={28} color="var(--accent)" />
           Undercut / Overcut Analyzer
         </h1>
-        <p style={{ fontSize: 13, color: 'var(--text-soft)', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           Analyze pit strategy battles — detect undercuts, overcuts, and their effectiveness in real time
         </p>
       </div>
@@ -380,12 +380,12 @@ export default function UndercutAnalyzer() {
                     ? null
                     : w.type === 'undercut'
                       ? <CheckCircle size={14} color="#27F4D2" />
-                      : <AlertTriangle size={14} color="#FFD700" />;
+                      : <AlertTriangle size={14} color="#D4A800" />;
 
                   return (
                     <div key={i} style={{
                       padding: 16, borderRadius: 8,
-                      background: 'var(--surface-hover)',
+                      background: 'var(--app-bg-alt)',
                       border: `1px solid ${winnerColor}30`,
                       borderLeft: `4px solid ${winnerColor}`,
                     }}>
@@ -438,8 +438,8 @@ export default function UndercutAnalyzer() {
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={analysis.gapData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-                <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
-                <YAxis stroke="var(--text-soft)" fontSize={11}
+                <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
+                <YAxis stroke="var(--text-muted)" fontSize={11}
                   tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
                 <Tooltip
                   contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 11 }}
@@ -449,14 +449,14 @@ export default function UndercutAnalyzer() {
                     return [v, name];
                   }}
                 />
-                <ReferenceLine y={0} stroke="var(--text-soft)" strokeDasharray="2 2" />
+                <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="2 2" />
                 {analysis.pitLaps1.map(l => (
                   <ReferenceLine key={`p1-${l}`} x={l} stroke={color1} strokeDasharray="4 2" strokeWidth={2} opacity={0.6} />
                 ))}
                 {analysis.pitLaps2.map(l => (
                   <ReferenceLine key={`p2-${l}`} x={l} stroke={color2} strokeDasharray="4 2" strokeWidth={2} opacity={0.6} />
                 ))}
-                <Line type="monotone" dataKey="gap" stroke="#FFD700" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="gap" stroke="#D4A800" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
             <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 10, color: 'var(--text-muted)' }}>
@@ -469,7 +469,7 @@ export default function UndercutAnalyzer() {
                 {d2Info?.name_acronym || `D2`} pit stop
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 16, height: 2, background: '#FFD700', display: 'inline-block', borderRadius: 1 }} />
+                <span style={{ width: 16, height: 2, background: '#D4A800', display: 'inline-block', borderRadius: 1 }} />
                 Gap
               </span>
             </div>
@@ -486,8 +486,8 @@ export default function UndercutAnalyzer() {
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={analysis.deltaData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
-                <XAxis dataKey="lap" stroke="var(--text-soft)" fontSize={11} />
-                <YAxis stroke="var(--text-soft)" fontSize={11}
+                <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
+                <YAxis stroke="var(--text-muted)" fontSize={11}
                   tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`}
                   domain={['auto', 'auto']}
                 />
@@ -499,7 +499,7 @@ export default function UndercutAnalyzer() {
                     v < 0 ? `${d1Info?.name_acronym || 'D1'} faster` : `${d2Info?.name_acronym || 'D2'} faster`,
                   ]}
                 />
-                <ReferenceLine y={0} stroke="var(--text-soft)" strokeDasharray="2 2" />
+                <ReferenceLine y={0} stroke="var(--text-muted)" strokeDasharray="2 2" />
                 {analysis.pitLaps1.map(l => (
                   <ReferenceLine key={`pd1-${l}`} x={l} stroke={color1} strokeDasharray="4 2" opacity={0.5} />
                 ))}
@@ -516,7 +516,7 @@ export default function UndercutAnalyzer() {
       {/* Explainer */}
       <div style={{
         marginTop: 24, padding: 16, borderRadius: 8,
-        background: 'var(--surface-hover)', border: '1px solid var(--panel-border)',
+        background: 'var(--app-bg-alt)', border: '1px solid var(--panel-border)',
         fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6,
       }}>
         <strong style={{ color: 'var(--text-secondary)' }}>How it works:</strong> An <strong>undercut</strong> occurs

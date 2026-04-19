@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/f1-strategy-hub/static/js/main.475af755.js",
+    "main.js": "/f1-strategy-hub/static/js/main.caa86928.js",
     "index.html": "/f1-strategy-hub/index.html",
-    "main.475af755.js.map": "/f1-strategy-hub/static/js/main.475af755.js.map"
+    "main.caa86928.js.map": "/f1-strategy-hub/static/js/main.caa86928.js.map"
   },
   "entrypoints": [
-    "static/js/main.475af755.js"
+    "static/js/main.caa86928.js"
   ]
 }

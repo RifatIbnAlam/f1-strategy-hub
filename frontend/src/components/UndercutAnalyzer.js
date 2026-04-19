@@ -336,7 +336,7 @@ export default function UndercutAnalyzer() {
                           <div key={i} style={{
                             width: `${width}%`, background: `${compColor}cc`,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 9, fontWeight: 700, color: compound === 'HARD' ? '#333' : '#fff',
+                            fontSize: 9, fontWeight: 700, color: '#fff',
                           }}>
                             {compound?.[0]}{compound === 'MEDIUM' ? 'ED' : compound?.slice(1, 3)?.toUpperCase()}
                           </div>

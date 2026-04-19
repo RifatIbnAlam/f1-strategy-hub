@@ -26,7 +26,7 @@ export const TEAM_COLORS = {
 export const TIRE_COMPOUNDS = {
   SOFT: { color: '#FF3333', label: 'Soft', degradation: 0.08 },
   MEDIUM: { color: '#FFD700', label: 'Medium', degradation: 0.05 },
-  HARD: { color: '#EEEEEE', label: 'Hard', degradation: 0.03 },
+  HARD: { color: '#A0A0A0', label: 'Hard', degradation: 0.03 },
   INTERMEDIATE: { color: '#43B02A', label: 'Inter', degradation: 0.04 },
   WET: { color: '#0067AD', label: 'Wet', degradation: 0.02 },
 };

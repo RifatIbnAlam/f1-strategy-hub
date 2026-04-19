@@ -1,0 +1,26 @@
+# Dependencies
+frontend/node_modules/
+analysis/__pycache__/
+analysis/cache/
+*.pyc
+
+# Build
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+*.log
+
+# FastF1 cache
+cache/

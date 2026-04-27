@@ -49,10 +49,44 @@ export async function getSessions(year, sessionType = null) {
 
 /**
  * Get the most recent session
+ *
+ * OpenF1's /sessions endpoint does not return meeting_name; it lives on
+ * /meetings. We fetch the matching meeting in parallel so callers can rely
+ * on meeting_name being populated. Falls back gracefully if the meeting
+ * lookup fails — the session fields (location, country_name,
+ * circuit_short_name) are always available as a last resort.
  */
 export async function getLatestSession() {
   const data = await fetchWithCache('/sessions', { session_key: 'latest' });
-  return Array.isArray(data) ? data[0] : data;
+  const session = Array.isArray(data) ? data[0] : data;
+  if (!session) return session;
+
+  // Best-effort enrichment with meeting_name. Never let a failure here
+  // bubble up — the dashboard should still render something useful.
+  if (!session.meeting_name && session.meeting_key) {
+    try {
+      const meetings = await fetchWithCache('/meetings', {
+        meeting_key: session.meeting_key,
+      });
+      const meeting = Array.isArray(meetings) ? meetings[0] : meetings;
+      if (meeting?.meeting_name) {
+        session.meeting_name = meeting.meeting_name;
+      }
+    } catch (_) {
+      // Swallow — fallback chain in the consumer handles the empty case.
+    }
+  }
+
+  // Final fallback so the consumer never has to repeat this logic.
+  if (!session.meeting_name) {
+    session.meeting_name =
+      session.circuit_short_name ||
+      session.location ||
+      session.country_name ||
+      '';
+  }
+
+  return session;
 }
 
 // ─── Driver Endpoints ─────────────────────────────────────────────────────────

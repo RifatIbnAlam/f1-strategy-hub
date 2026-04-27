@@ -205,7 +205,10 @@ export default function Dashboard() {
               animation: 'pulse 2s infinite',
             }} />
             <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-              Latest: {latestSession.session_name} - {latestSession.meeting_name}
+              Latest:{' '}
+              {[latestSession.session_name, latestSession.meeting_name]
+                .filter(Boolean)
+                .join(' — ')}
             </span>
           </div>
         )}

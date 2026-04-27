@@ -106,8 +106,19 @@ const StandingRow = ({ position, name, points, team, color, isFirst, nationality
 );
 
 /* ─── Race Calendar Item ───────────────────────────────────────────────────── */
+// Parse a YYYY-MM-DD string as a local-timezone date so the displayed day/month
+// always matches the API value. `new Date('2026-03-29')` is interpreted as UTC
+// midnight, which then drifts back a day for users west of GMT — that's how
+// Race Flow (raw string) and Dashboard (Date object) ended up disagreeing.
+const parseLocalDate = (iso) => {
+  if (!iso) return null;
+  const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return new Date(iso);
+  return new Date(y, m - 1, d);
+};
+
 const RaceItem = ({ race, isPast }) => {
-  const date = new Date(race.date);
+  const date = parseLocalDate(race.date);
   const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   return (
     <div style={{
@@ -124,10 +135,10 @@ const RaceItem = ({ race, isPast }) => {
         border: isPast ? '1px solid var(--panel-border)' : '1px solid var(--accent-border)',
       }}>
         <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
-          {date.getDate()}
+          {date ? date.getDate() : '—'}
         </span>
         <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--accent)', letterSpacing: '1px' }}>
-          {monthNames[date.getMonth()]}
+          {date ? monthNames[date.getMonth()] : ''}
         </span>
       </div>
       <div style={{ flex: 1 }}>
@@ -281,7 +292,7 @@ export default function Dashboard() {
                 <RaceItem
                   key={race.round}
                   race={race}
-                  isPast={new Date(race.date) < today}
+                  isPast={parseLocalDate(race.date) < today}
                 />
               ))}
             </div>

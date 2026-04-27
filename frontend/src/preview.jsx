@@ -170,30 +170,48 @@ function DominanceTimeline({ champions, mode }) {
       </div>
 
       {/* Dynasty streak pills */}
-      <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {streaks.filter(s => s.count >= 2).map((s, i) => {
-          const color = getChampionColor(s);
-          return (
-            <button
-              key={i}
-              onClick={() => setSelectedChampion(selectedChampion === s.champion ? null : s.champion)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '4px 10px', borderRadius: 6,
-                background: selectedChampion === s.champion ? `${color}33` : 'var(--app-bg-alt)',
-                border: `1px solid ${selectedChampion === s.champion ? color : 'var(--panel-border)'}`,
-                cursor: 'pointer', color: 'var(--text-secondary)',
-                fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
-              {s.champion}
-              <span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
-                {s.count}× ({s.start}{s.end !== s.start ? `–${s.end}` : ''})
-              </span>
-            </button>
-          );
-        })}
+      <div style={{ marginTop: 20 }}>
+        <div style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '1.2px',
+          color: 'var(--text-muted)', textTransform: 'uppercase',
+          marginBottom: 8,
+        }}>
+          Consecutive title streaks
+          <span style={{
+            fontSize: 10, fontWeight: 500, letterSpacing: 'normal',
+            color: 'var(--text-muted)', textTransform: 'none',
+            marginLeft: 6, opacity: 0.8,
+          }}>
+            — back-to-back wins only, not career totals
+          </span>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {streaks.filter(s => s.count >= 2).map((s, i) => {
+            const color = getChampionColor(s);
+            const range = s.end !== s.start ? `${s.start}–${s.end}` : `${s.start}`;
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedChampion(selectedChampion === s.champion ? null : s.champion)}
+                title={`${s.champion} won ${s.count} championships in a row (${range}). This is a consecutive streak, not a career title count.`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '4px 10px', borderRadius: 6,
+                  background: selectedChampion === s.champion ? `${color}33` : 'var(--app-bg-alt)',
+                  border: `1px solid ${selectedChampion === s.champion ? color : 'var(--panel-border)'}`,
+                  cursor: 'pointer', color: 'var(--text-secondary)',
+                  fontSize: 11, fontWeight: 500, fontFamily: "'Inter', sans-serif",
+                }}
+              >
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
+                {s.champion}
+                <span style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 10 }}>
+                  {s.count} in a row ({range})
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

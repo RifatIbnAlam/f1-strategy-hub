@@ -1,6 +1,6 @@
 # F1 Strategy Hub
 
-F1 Strategy Hub is a Formula 1 analytics project that combines a live React dashboard with Python-based motorsport analysis workflows. It brings together real-world telemetry, historical race results, championship data, and strategy modeling in one place.
+[F1 Strategy Hub](https://rifatibnalam.github.io/f1-strategy-hub/) is a Formula 1 analytics project that combines a live React dashboard with Python-based motorsport analysis workflows. It brings together real-world telemetry, historical race results, championship data, and strategy modeling in one place.
 
 ## Highlights
 

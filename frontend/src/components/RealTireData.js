@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
-import { TIRE_COMPOUNDS } from '../data/constants';
+import { TIRE_COMPOUNDS, tone } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   ComposedChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -266,7 +266,7 @@ export default function RealTireData() {
                     </span>
                     <span style={{
                       fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4,
-                      background: `${compColor}20`, color: compColor, border: `1px solid ${compColor}40`,
+                      background: `${compColor}20`, color: tone(compColor), border: `1px solid ${compColor}40`,
                     }}>
                       {stint.compound}
                     </span>
@@ -295,7 +295,7 @@ export default function RealTireData() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Fuel-corrected deg</span>
                       <span style={{
-                        color: stint.fuelCorrected > 0.12 ? 'var(--accent)' : stint.fuelCorrected > 0.06 ? '#D4A800' : '#27F4D2',
+                        color: stint.fuelCorrected > 0.12 ? 'var(--accent-text)' : stint.fuelCorrected > 0.06 ? 'var(--warning)' : 'var(--positive)',
                         fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {stint.fuelCorrected > 0 ? '+' : ''}{stint.fuelCorrected.toFixed(3)} s/lap
@@ -310,7 +310,7 @@ export default function RealTireData() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Fit R²</span>
                       <span style={{
-                        color: stint.r2 > 0.7 ? '#27F4D2' : stint.r2 > 0.4 ? '#D4A800' : 'var(--text-muted)',
+                        color: stint.r2 > 0.7 ? 'var(--positive)' : stint.r2 > 0.4 ? 'var(--warning)' : 'var(--text-muted)',
                         fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {stint.r2.toFixed(3)}

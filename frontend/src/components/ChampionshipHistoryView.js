@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { getFlag } from '../data/flags';
+import { tone, textOn } from '../data/constants';
 import {
   CHAMPION_TEAM_COLORS,
   F1_ERAS,
@@ -85,7 +86,8 @@ function DominanceTimeline({ champions, mode }) {
               onClick={() => setSelectedChampion(selectedChampion === c.champion ? null : c.champion)}
               style={{
                 width: 38, height: 38, borderRadius: 6,
-                background: isHovered ? color : `${color}BB`,
+                background: color,
+                filter: isHovered ? 'brightness(1.15)' : 'none',
                 border: selectedChampion === c.champion ? `2px solid ${color}` : '2px solid transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', transition: 'all 0.15s ease',
@@ -97,9 +99,8 @@ function DominanceTimeline({ champions, mode }) {
               title={`${c.year}: ${c.champion}${c.team ? ` (${c.team})` : ''}`}
             >
               <span style={{
-                fontSize: 9, fontWeight: 700, color: '#fff',
+                fontSize: 9, fontWeight: 700, color: textOn(color),
                 fontFamily: "'JetBrains Mono', monospace",
-                textShadow: '0 1px 2px rgba(0,0,0,0.6)',
               }}>
                 {String(c.year).slice(-2)}
               </span>
@@ -191,13 +192,13 @@ function EraSection({ champions }) {
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                     {era.name}
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 400, marginLeft: 8 }}>
-                      {era.years[0]}–{era.years[1]}
+                      {era.years[0]}–{era.years[1] >= new Date().getFullYear() ? 'present' : era.years[1]}
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{era.description}</div>
                 </div>
                 <div style={{ textAlign: 'right', marginRight: 8 }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: era.color, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: tone(era.color), fontFamily: "'JetBrains Mono', monospace" }}>
                     {eraChampions.length}
                   </div>
                   <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>titles</div>
@@ -210,7 +211,7 @@ function EraSection({ champions }) {
                     {dominant && (
                       <span>
                         {' '}· Most dominant:{' '}
-                        <span style={{ color: dominantColor, fontWeight: 600 }}>{dominant[0]}</span>
+                        <span style={{ color: tone(dominantColor), fontWeight: 600 }}>{dominant[0]}</span>
                         {' '}({dominant[1]})
                       </span>
                     )}
@@ -226,7 +227,7 @@ function EraSection({ champions }) {
                         }}>
                           <span style={{
                             fontFamily: "'JetBrains Mono', monospace",
-                            fontWeight: 600, color, marginRight: 6, fontSize: 10,
+                            fontWeight: 600, color: tone(color), marginRight: 6, fontSize: 10,
                           }}>{c.year}</span>
                           {getFlag(c.nationality)}{' '}{c.champion}
                         </div>
@@ -439,7 +440,7 @@ function NationalityGrid({ champions }) {
 }
 
 /* ─── Main Export ─────────────────────────────────────────────────────────── */
-export default function ChampionshipHistoryView({ champions = [], mode = 'drivers' }) {
+export default function ChampionshipHistoryView({ champions = [], mode = 'drivers', controls = null }) {
   const titleCounts = useMemo(() => {
     const counts = {};
     champions.forEach(c => { counts[c.champion] = (counts[c.champion] || 0) + 1; });
@@ -469,6 +470,7 @@ export default function ChampionshipHistoryView({ champions = [], mode = 'driver
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
           {champions.length} {mode === 'drivers' ? "drivers'" : "constructors'"} championships decided, {champions[0]?.year}–{latest?.year}
         </p>
+        {controls && <div style={{ marginTop: 16 }}>{controls}</div>}
       </div>
 
       {/* Hero stats strip */}
@@ -481,8 +483,8 @@ export default function ChampionshipHistoryView({ champions = [], mode = 'driver
         {[
           { label: 'Titles Awarded',    value: champions.length,                     color: '#D4A800', mono: true },
           { label: 'Unique Champions',  value: titleCounts.length,                   color: '#e10600', mono: true },
-          { label: 'Most Titles',       value: `${mostTitles} (${topCount})`,       color: '#27F4D2', mono: false },
-          { label: `Reigning Champion (${latest?.year})`, value: latest?.champion,   color: '#FF8000', mono: false },
+          { label: 'Most Titles',       value: `${mostTitles} (${topCount})`,       color: 'var(--text-soft)', mono: false },
+          { label: `Reigning Champion (${latest?.year})`, value: latest?.champion,   color: getChampionColor(latest), mono: false },
         ].map((s, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center', flexShrink: 0 }} />

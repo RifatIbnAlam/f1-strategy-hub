@@ -40,22 +40,25 @@ const LoadingSpinner = () => (
 );
 
 const ErrorMessage = ({ message }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)', padding: 16, fontSize: 13 }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent-text)', padding: 16, fontSize: 13 }}>
     <AlertCircle size={16} />
     <span>{message} (API may be temporarily unavailable)</span>
   </div>
 );
 
 /* ─── Stat Card ────────────────────────────────────────────────────────────── */
-const StatCard = ({ label, value, icon: Icon, color = '#e10600', sub }) => (
+const StatCard = ({ label, value, icon: Icon, color = 'var(--accent)', sub }) => (
   <Card style={{ textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
     <div style={{
       position: 'absolute', top: -20, right: -20,
       width: 80, height: 80, borderRadius: '50%',
-      background: `radial-gradient(circle, ${color}15, transparent)`,
+      background: `radial-gradient(circle, color-mix(in srgb, ${color} 10%, transparent), transparent)`,
     }} />
     <Icon size={24} color={color} style={{ marginBottom: 8 }} />
-    <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{
+      fontSize: 'clamp(16px, 2.2vw, 28px)', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace",
+      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    }} title={typeof value === 'string' ? value : undefined}>
       {value}
     </div>
     <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1px', marginTop: 4 }}>
@@ -169,7 +172,7 @@ const RaceItem = ({ race, isPast, isNext }) => {
         <span style={{ fontSize: 14, fontWeight: 700, color: isPast ? 'var(--text-muted)' : 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
           {date ? date.getDate() : '—'}
         </span>
-        <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--accent)', letterSpacing: '1px' }}>
+        <span style={{ fontSize: 8, fontWeight: 600, color: isPast ? 'var(--text-muted)' : 'var(--accent-text)', letterSpacing: '1px' }}>
           {date ? monthNames[date.getMonth()] : ''}
         </span>
       </div>
@@ -186,7 +189,7 @@ const RaceItem = ({ race, isPast, isNext }) => {
         padding: '3px 8px',
         borderRadius: 4,
         background: isPast ? 'var(--app-bg-alt)' : 'var(--accent-soft)',
-        color: isPast ? 'var(--text-muted)' : 'var(--accent)',
+        color: isPast ? 'var(--text-muted)' : 'var(--accent-text)',
       }}>
         {isNext ? 'NEXT' : `R${race.round}`}
       </span>
@@ -269,27 +272,27 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 45%), 1fr))', gap: 16, marginBottom: 32 }}>
         <StatCard
           icon={Trophy}
           label="Championship Leader"
           value={leader ? `${leader.Driver?.givenName?.[0]}. ${leader.Driver?.familyName}` : '...'}
           sub={leader ? `${leader.points} pts${gapToSecond != null ? ` · +${gapToSecond} over P2` : ''}` : ''}
-          color="#FFD700"
+          color="#D4A800"
         />
         <StatCard
           icon={Users}
           label="Top Constructor"
           value={topConstructor?.Constructor?.name || '...'}
           sub={topConstructor ? `${topConstructor.points} pts` : ''}
-          color="#e10600"
+          color={topConstructor ? getTeamColor(topConstructor.Constructor?.constructorId) : 'var(--accent)'}
         />
         <StatCard
           icon={Flag}
           label="Races Complete"
           value={lastRace ? `${lastRace.round}/${schedule?.length || '?'}` : '...'}
           sub={lastRace?.raceName || ''}
-          color="#27F4D2"
+          color="var(--positive)"
         />
         <StatCard
           icon={Clock}
@@ -298,7 +301,7 @@ export default function Dashboard() {
           sub={nextRace
             ? `${nextRace.raceName} · ${raceStart(nextRace).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
             : `${season} Formula 1 World Championship`}
-          color="#FF8000"
+          color="var(--accent)"
         />
       </div>
 
@@ -426,7 +429,7 @@ export default function Dashboard() {
                     {r.Time?.time || r.status}
                   </span>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
+                    fontSize: 11, fontWeight: 700, color: 'var(--accent-text)',
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     +{r.points}

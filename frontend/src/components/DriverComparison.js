@@ -6,10 +6,11 @@ import {
 } from 'recharts';
 import { useApi } from '../hooks/useApi';
 import { getDriverStandings, getRaceResults, getSprintResults } from '../services/jolpica';
-import { getTeamColor, currentConstructor, distinctColor } from '../data/constants';
+import { getTeamColor, currentConstructor, distinctColor, tone } from '../data/constants';
 import { GitCompare, Search, Loader, Trophy, Flag, Award, TrendingUp } from 'lucide-react';
 import { getFlag } from '../data/flags';
 import TeamBadge from './TeamBadge';
+import { toneLegend } from './chartUtils';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -72,7 +73,7 @@ const CompStat = ({ label, val1, val2, color1, color2, icon: Icon, format = v =>
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{
-          fontSize: 16, fontWeight: 700, color: d1Wins ? color1 : 'var(--text-soft)',
+          fontSize: 16, fontWeight: 700, color: d1Wins ? tone(color1) : 'var(--text-soft)',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           {format(v1)}
@@ -84,7 +85,7 @@ const CompStat = ({ label, val1, val2, color1, color2, icon: Icon, format = v =>
           </span>
         </div>
         <span style={{
-          fontSize: 16, fontWeight: 700, color: d2Wins ? color2 : 'var(--text-soft)',
+          fontSize: 16, fontWeight: 700, color: d2Wins ? tone(color2) : 'var(--text-soft)',
           fontFamily: "'JetBrains Mono', monospace",
         }}>
           {format(v2)}
@@ -129,13 +130,13 @@ const ResultDistribution = ({ results, driverId, color, name }) => {
     { key: 'podiums', count: stats.podiums,  label: 'P2–P3',   color },
     { key: 'points',  count: stats.points,   label: 'P4–P10',  color: `${color}88` },
     { key: 'outside', count: stats.outside,  label: 'P11+',    color: 'var(--app-bg-alt)' },
-    { key: 'dnfs',    count: stats.dnfs,     label: 'DNF',     color: 'var(--accent)' },
+    { key: 'dnfs',    count: stats.dnfs,     label: 'DNF',     color: 'var(--accent-text)' },
   ].filter(s => s.count > 0);
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color }}>{name}</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: tone(color) }}>{name}</span>
         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{stats.total} races</span>
       </div>
       {/* Stacked bar */}
@@ -309,17 +310,21 @@ export default function DriverComparison() {
             <Loader size={16} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 24, alignItems: 'end' }}>
-            <DriverSelector drivers={standings || []} selected={driver1Id} onSelect={setDriver1Id} label="DRIVER 1" color={color1} exclude={driver2Id} />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-end', justifyContent: 'center' }}>
+            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+              <DriverSelector drivers={standings || []} selected={driver1Id} onSelect={setDriver1Id} label="DRIVER 1" color={color1} exclude={driver2Id} />
+            </div>
             <div style={{
-              width: 50, height: 50, borderRadius: '50%',
+              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
               background: 'var(--accent-soft)', border: '2px solid var(--accent-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--accent)', fontSize: 14, fontWeight: 800,
+              color: 'var(--accent-text)', fontSize: 14, fontWeight: 800,
             }}>
               VS
             </div>
-            <DriverSelector drivers={standings || []} selected={driver2Id} onSelect={setDriver2Id} label="DRIVER 2" color={color2} exclude={driver1Id} />
+            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+              <DriverSelector drivers={standings || []} selected={driver2Id} onSelect={setDriver2Id} label="DRIVER 2" color={color2} exclude={driver1Id} />
+            </div>
           </div>
         )}
       </Card>
@@ -332,14 +337,14 @@ export default function DriverComparison() {
           <Card>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: color1 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: tone(color1) }}>
                   <span style={{ marginRight: 6 }}>{getFlag(driver1.Driver.nationality)}</span>
                   {driver1.Driver.givenName} {driver1.Driver.familyName}
                 </div>
                 <div style={{ marginTop: 4 }}><TeamBadge team={currentConstructor(driver1)?.name} size="md" /></div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 20, fontWeight: 800, color: color2 }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color: tone(color2) }}>
                   {driver2.Driver.givenName} {driver2.Driver.familyName}
                   <span style={{ marginLeft: 6 }}>{getFlag(driver2.Driver.nationality)}</span>
                 </div>
@@ -376,7 +381,7 @@ export default function DriverComparison() {
                 <Tooltip contentStyle={tooltipStyle} labelFormatter={l => l} formatter={(v, n) => [`${v} pts`, n]} />
                 <Line type="monotone" dataKey={name1} stroke={color1} strokeWidth={2.5} dot={{ r: 3, fill: color1 }} />
                 <Line type="monotone" dataKey={name2} stroke={color2} strokeWidth={2.5} dot={{ r: 3, fill: color2 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Legend formatter={toneLegend} wrapperStyle={{ fontSize: 12 }} />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -429,7 +434,7 @@ export default function DriverComparison() {
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color }} />
-                        <span style={{ fontSize: 14, fontWeight: 700, color: d.color }}>{d.name}</span>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: tone(d.color) }}>{d.name}</span>
                         <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.count} classified races</span>
                       </div>
 
@@ -458,15 +463,15 @@ export default function DriverComparison() {
                       {/* Gain/loss badge */}
                       <div style={{
                         padding: '6px 12px', borderRadius: 8, textAlign: 'center',
-                        background: gained ? 'rgba(0, 200, 83, 0.1)' : 'rgba(225, 6, 0, 0.1)',
-                        border: `1px solid ${gained ? 'rgba(0, 200, 83, 0.25)' : 'rgba(225, 6, 0, 0.25)'}`,
+                        background: gained ? 'var(--positive-soft)' : 'var(--accent-soft)',
+                        border: `1px solid ${gained ? 'color-mix(in srgb, var(--positive) 30%, transparent)' : 'var(--accent-border)'}`,
                       }}>
                         <span style={{
                           fontSize: 13, fontWeight: 700,
-                          color: gained ? '#00C853' : 'var(--accent)',
+                          color: gained ? 'var(--positive)' : 'var(--accent-text)',
                           fontFamily: "'JetBrains Mono', monospace",
                         }}>
-                          {gained ? '↑' : '↓'} {Math.abs(delta)} positions {gained ? 'gained' : 'lost'} on average
+                          {gained ? '↑' : '↓'} {Math.abs(delta)} position{Math.abs(delta) === 1 ? '' : 's'} {gained ? 'gained' : 'lost'} on average
                         </span>
                       </div>
                     </div>

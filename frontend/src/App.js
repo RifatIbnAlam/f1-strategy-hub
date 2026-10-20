@@ -7,6 +7,7 @@ import ChampionshipHistory from './components/ChampionshipHistory';
 import RaceFlow from './components/RaceFlow';
 import UndercutAnalyzer from './components/UndercutAnalyzer';
 import ErrorBoundary from './components/ErrorBoundary';
+import SnapshotBanner from './components/SnapshotBanner';
 import {
   LayoutDashboard,
   GitCompare,
@@ -16,7 +17,6 @@ import {
   TrendingUp,
   ArrowDownUp,
   Github,
-  Gauge,
   Menu,
   Moon,
   Sun,
@@ -46,6 +46,15 @@ const globalStyles = `
     --accent-soft: rgba(225, 6, 0, 0.12);
     --accent-border: rgba(225, 6, 0, 0.18);
     --shadow-soft: 0 22px 50px rgba(0, 0, 0, 0.25);
+    /* Text-safe variants: brand red and status colours tuned for contrast
+       on this theme's panels (small text needs ~4.5:1). */
+    --accent-text: #ff5249;
+    --positive: #34d399;
+    --positive-soft: rgba(52, 211, 153, 0.12);
+    --warning: #f5c518;
+    /* How much of a team colour survives when it's used for text; the rest
+       is mixed toward --text-primary so every team stays readable. */
+    --tone-strength: 82%;
   }
   [data-theme='light'] {
     --app-bg: #f4f0e8;
@@ -67,6 +76,11 @@ const globalStyles = `
     --accent-soft: rgba(211, 59, 13, 0.10);
     --accent-border: rgba(211, 59, 13, 0.18);
     --shadow-soft: 0 20px 45px rgba(98, 72, 40, 0.10);
+    --accent-text: #b0300c;
+    --positive: #0f7a46;
+    --positive-soft: rgba(15, 122, 70, 0.10);
+    --warning: #8a5a00;
+    --tone-strength: 52%;
   }
   body {
     font-family: 'Inter', -apple-system, sans-serif;
@@ -185,7 +199,7 @@ const VIEWS = [
   { id: 'comparison', label: 'Driver Compare', icon: GitCompare },
   { id: 'telemetry', label: 'Telemetry', icon: Activity },
   { id: 'raceflow', label: 'Race Flow', icon: TrendingUp },
-  { id: 'undercut', label: 'Undercut Analyzer', icon: ArrowDownUp },
+  { id: 'undercut', label: 'Pit Battles', icon: ArrowDownUp },
   { id: 'history', label: 'Championships', icon: Trophy },
 ];
 
@@ -202,6 +216,16 @@ const viewFromHash = () => {
   const id = window.location.hash.replace(/^#\/?/, '');
   return VIEWS.some(v => v.id === id) ? id : 'dashboard';
 };
+
+/* ─── Logo ──────────────────────────────────────────────────────────────────
+ * A car line cutting under another: the undercut. Same mark as the favicon. */
+const LogoMark = ({ size = 22 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#fff"
+    strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 8h9" opacity="0.55" />
+    <path d="M3 16h7c3 0 4-8 7-8h4" />
+  </svg>
+);
 
 /* ─── App Component ─────────────────────────────────────────────────────────── */
 export default function App() {
@@ -228,7 +252,7 @@ export default function App() {
 
   useEffect(() => {
     const view = VIEWS.find(v => v.id === activeView);
-    document.title = activeView === 'dashboard' ? 'F1 Strategy Hub' : `${view.label} · F1 Strategy Hub`;
+    document.title = activeView === 'dashboard' ? 'Undercut · F1 Strategy Analytics' : `${view.label} · Undercut`;
   }, [activeView]);
 
   useEffect(() => {
@@ -305,17 +329,17 @@ export default function App() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 0 20px rgba(225, 6, 0, 0.4)',
               }}>
-                <Gauge size={22} color="#fff" />
+                <LogoMark size={22} />
               </div>
               <div>
                 <div style={{
-                  fontSize: 16, fontWeight: 800, color: 'var(--text-primary)',
-                  letterSpacing: '-0.5px',
-                }}>F1 STRATEGY</div>
+                  fontSize: 18, fontWeight: 900, color: 'var(--text-primary)',
+                  letterSpacing: '1.5px', fontStyle: 'italic',
+                }}>UNDERCUT</div>
                 <div style={{
-                  fontSize: 10, fontWeight: 600, color: 'var(--accent)',
-                  letterSpacing: '2px',
-                }}>ANALYTICS HUB</div>
+                  fontSize: 9, fontWeight: 700, color: 'var(--accent-text)',
+                  letterSpacing: '1px', whiteSpace: 'nowrap',
+                }}>F1 STRATEGY ANALYTICS</div>
               </div>
             </div>
           </div>
@@ -404,6 +428,7 @@ export default function App() {
 
         {/* ── Main Content ── */}
         <main className="app-main">
+          <SnapshotBanner />
           <ErrorBoundary resetKey={activeView}>
             {renderView()}
           </ErrorBoundary>

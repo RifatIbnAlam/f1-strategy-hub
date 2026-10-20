@@ -3,9 +3,11 @@
  * Historical standings, results, schedules, and driver/constructor info
  * Docs: https://github.com/jolpica/jolpica-f1
  *
- * Free, no auth required. Rate limit: 200 requests/hour.
+ * Free, no auth required. Rate limited (burst ~4 req/s, ~500 requests/hour).
  * Drop-in replacement for Ergast: api.jolpi.ca/ergast/f1/
  */
+
+import { fetchJson } from './snapshot';
 
 const BASE_URL = 'https://api.jolpi.ca/ergast/f1';
 
@@ -36,30 +38,23 @@ async function fetchAllPages(basePath, extractFn) {
   return all;
 }
 
-/**
- * Jolpica enforces a burst limit (~4 req/s). Paginated season queries can trip
- * it, so back off and retry a couple of times on HTTP 429.
- */
-async function fetchWithRetry(url, attempts = 3) {
-  for (let i = 0; ; i++) {
-    const response = await fetch(url);
-    if (response.status !== 429 || i >= attempts - 1) return response;
-    await new Promise(resolve => setTimeout(resolve, 600 * 2 ** i));
-  }
+/** Full request URL for a Jolpica path (also used by the snapshot script). */
+export function buildUrl(path) {
+  const [pathname, queryString] = path.split('?');
+  return `${BASE_URL}${pathname}.json${queryString ? `?${queryString}` : ''}`;
 }
 
 async function fetchJolpica(path) {
-  const [pathname, queryString] = path.split('?');
-  const url = `${BASE_URL}${pathname}.json${queryString ? `?${queryString}` : ''}`;
+  const url = buildUrl(path);
   const cached = cache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
 
   try {
-    const response = await fetchWithRetry(url);
-    if (!response.ok) throw new Error(`Jolpica API error: ${response.status}`);
-    const data = await response.json();
+    // Jolpica enforces a burst limit (~4 req/s) that paginated season queries
+    // can trip; fetchJson backs off on 429 and falls back to the snapshot.
+    const data = await fetchJson(url, { backoffMs: 600 });
     const result = data.MRData;
 
     cache.set(url, { data: result, timestamp: Date.now() });
@@ -260,52 +255,6 @@ export async function getPitStops(year, round) {
   return data?.RaceTable?.Races?.[0]?.PitStops || [];
 }
 
-// ─── Championship History ─────────────────────────────────────────────────────
-
-/**
- * Get all world champions
- */
-export async function getWorldChampions(limit = 100) {
-  const seasons = await getSeasons(limit);
-  const results = await Promise.allSettled(
-    seasons.map(async ({ season }) => {
-      const standings = await getDriverStandings(season);
-      if (!standings?.length) return null;
-      return {
-        season,
-        round: standings[0]?.position ? standings[0].position : undefined,
-        DriverStandings: [standings[0]],
-      };
-    })
-  );
-
-  return results
-    .filter(result => result.status === 'fulfilled' && result.value)
-    .map(result => result.value);
-}
-
-/**
- * Get all constructor champions
- */
-export async function getConstructorChampions(limit = 100) {
-  const seasons = await getSeasons(limit);
-  const results = await Promise.allSettled(
-    seasons.map(async ({ season }) => {
-      const standings = await getConstructorStandings(season);
-      if (!standings?.length) return null;
-      return {
-        season,
-        round: standings[0]?.position ? standings[0].position : undefined,
-        ConstructorStandings: [standings[0]],
-      };
-    })
-  );
-
-  return results
-    .filter(result => result.status === 'fulfilled' && result.value)
-    .map(result => result.value);
-}
-
 // ─── Season list ──────────────────────────────────────────────────────────────
 
 /**
@@ -328,8 +277,6 @@ export const jolpica = {
   getConstructors,
   getLapTimes,
   getPitStops,
-  getWorldChampions,
-  getConstructorChampions,
   getSeasons,
 };
 

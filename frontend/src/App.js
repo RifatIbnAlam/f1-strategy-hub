@@ -7,6 +7,7 @@ import ChampionshipHistory from './components/ChampionshipHistory';
 import RaceFlow from './components/RaceFlow';
 import UndercutAnalyzer from './components/UndercutAnalyzer';
 import ErrorBoundary from './components/ErrorBoundary';
+import SnapshotBanner from './components/SnapshotBanner';
 import {
   LayoutDashboard,
   GitCompare,
@@ -404,6 +405,7 @@ export default function App() {
 
         {/* ── Main Content ── */}
         <main className="app-main">
+          <SnapshotBanner />
           <ErrorBoundary resetKey={activeView}>
             {renderView()}
           </ErrorBoundary>

@@ -7,36 +7,33 @@
  * Rate limit: Be respectful, cache aggressively.
  */
 
+import { fetchJson } from './snapshot';
+
 const BASE_URL = 'https://api.openf1.org/v1';
 
 // Simple in-memory cache to avoid redundant API calls
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-async function fetchWithCache(endpoint, params = {}) {
+/** Full request URL for an endpoint + params (also used by the snapshot script). */
+export function buildUrl(endpoint, params = {}) {
   const queryString = new URLSearchParams(params).toString();
-  const url = `${BASE_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
-  const cacheKey = url;
+  return `${BASE_URL}${endpoint}${queryString ? `?${queryString}` : ''}`;
+}
 
-  const cached = cache.get(cacheKey);
+async function fetchWithCache(endpoint, params = {}) {
+  const url = buildUrl(endpoint, params);
+  const cached = cache.get(url);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
 
   try {
-    // OpenF1's free tier is rate limited (a few requests per second), and
-    // views like the undercut analyzer fire several calls at once. Back off
-    // and retry on HTTP 429 instead of failing the whole view.
-    let response;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      response = await fetch(url);
-      if (response.status !== 429) break;
-      await new Promise(resolve => setTimeout(resolve, 700 * 2 ** attempt));
-    }
-    if (!response.ok) throw new Error(`OpenF1 API error: ${response.status}`);
-    const data = await response.json();
-
-    cache.set(cacheKey, { data, timestamp: Date.now() });
+    // OpenF1's free tier is rate limited, and views like the undercut analyzer
+    // fire several calls at once: fetchJson retries on HTTP 429 and falls back
+    // to the offline snapshot if the API stays unavailable.
+    const data = await fetchJson(url, { backoffMs: 700 });
+    cache.set(url, { data, timestamp: Date.now() });
     return data;
   } catch (error) {
     console.error(`OpenF1 fetch failed: ${endpoint}`, error);

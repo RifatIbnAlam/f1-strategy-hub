@@ -14,6 +14,8 @@ import {
   formatRaceTime,
 } from '../models/strategy';
 import RealTireData from './RealTireData';
+import ModelCalibration from './ModelCalibration';
+import MonteCarloPanel from './MonteCarloPanel';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -131,7 +133,13 @@ export default function StrategySimulator() {
     },
   ]);
 
-  const circuit = CIRCUIT_PRESETS[circuitKey];
+  // A circuit fitted from a real race (via "Calibrate & Backtest") joins the presets.
+  const [calibrated, setCalibrated] = useState(null);
+  const allCircuits = useMemo(
+    () => (calibrated ? { calibrated, ...CIRCUIT_PRESETS } : CIRCUIT_PRESETS),
+    [calibrated]
+  );
+  const circuit = allCircuits[circuitKey];
   const options = useMemo(
     () => ({ degModel, cliffLap, trackEvolution, startFuel }),
     [degModel, cliffLap, trackEvolution, startFuel]
@@ -207,8 +215,7 @@ export default function StrategySimulator() {
   }, []);
 
   // When switching circuit, rescale every plan to the new race distance.
-  const changeCircuit = (key) => {
-    const next = CIRCUIT_PRESETS[key];
+  const rescaleTo = (next) => {
     setStrategies(prev => prev.map(strat => {
       const total = strat.stints.reduce((a, s) => a + s.laps, 0) || 1;
       const scaled = strat.stints.map(s => ({ ...s, laps: Math.max(1, Math.round(s.laps * next.totalLaps / total)) }));
@@ -216,7 +223,21 @@ export default function StrategySimulator() {
       scaled[scaled.length - 1].laps = Math.max(1, scaled[scaled.length - 1].laps + drift);
       return { ...strat, stints: scaled };
     }));
+  };
+
+  const changeCircuit = (key) => {
+    rescaleTo(allCircuits[key]);
     setCircuitKey(key);
+  };
+
+  const applyCalibration = (fitted, fittedOptions) => {
+    setCalibrated(fitted);
+    rescaleTo(fitted);
+    setCircuitKey('calibrated');
+    setDegModel(fittedOptions.degModel);
+    setStartFuel(fittedOptions.startFuel);
+    setTrackEvolution(Math.min(0.02, Math.max(-0.06, +fittedOptions.trackEvolution.toFixed(3))));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const bothValid = simData.every(s => s.valid);
@@ -236,7 +257,8 @@ export default function StrategySimulator() {
           Race Strategy Simulator
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-          Model tyre degradation, fuel burn, and pit loss lap by lap, then search every legal 1- and 2-stop plan for the fastest race
+          Model tyre wear, fuel burn and pit loss lap by lap, search every legal 1- and 2-stop plan, stress-test them against
+          random safety cars, and calibrate the model against real races
         </p>
       </div>
 
@@ -250,7 +272,7 @@ export default function StrategySimulator() {
           <div>
             <label style={labelStyle}>CIRCUIT</label>
             <select value={circuitKey} onChange={e => changeCircuit(e.target.value)} style={{ ...selectStyle, fontFamily: "'JetBrains Mono', monospace" }}>
-              {Object.entries(CIRCUIT_PRESETS).map(([k, v]) => (
+              {Object.entries(allCircuits).map(([k, v]) => (
                 <option key={k} value={k}>{v.name} ({v.totalLaps} laps)</option>
               ))}
             </select>
@@ -280,7 +302,7 @@ export default function StrategySimulator() {
             <label style={labelStyle}>
               TRACK EVOLUTION: {trackEvolution.toFixed(3)}s/lap
             </label>
-            <input type="range" min={-30} max={0} value={Math.round(trackEvolution * 1000)}
+            <input type="range" min={-60} max={20} value={Math.round(trackEvolution * 1000)}
               onChange={e => setTrackEvolution(e.target.value / 1000)}
               style={{ width: '100%', accentColor: '#27F4D2' }}
             />
@@ -440,6 +462,14 @@ export default function StrategySimulator() {
         </div>
       </Card>
 
+      <MonteCarloPanel
+        key={circuit.name}
+        circuit={circuit}
+        options={options}
+        strategies={simData}
+        optimal={optimal.slice(0, 4)}
+      />
+
       {/* Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
         <Card>
@@ -507,6 +537,11 @@ export default function StrategySimulator() {
             </AreaChart>
           </ResponsiveContainer>
         </Card>
+      </div>
+
+      {/* Fit the model to a real race and backtest it */}
+      <div style={{ marginTop: 24 }}>
+        <ModelCalibration onApply={applyCalibration} />
       </div>
 
       {/* Real Tire Degradation Analysis */}

@@ -5,30 +5,44 @@
   "private": true,
   "homepage": "https://rifatibnalam.github.io/f1-strategy-hub",
   "dependencies": {
+    "axios": "^1.6.7",
+    "lucide-react": "^0.383.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
     "react-scripts": "5.0.1",
-    "recharts": "^2.12.0",
-    "lucide-react": "^0.383.0",
-    "axios": "^1.6.7"
+    "recharts": "^2.12.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "snapshot": "node scripts/snapshot.mjs",
+    "snapshot:mock": "SNAPSHOT_NO_THROTTLE=1 node --import ./e2e/mock-fetch.mjs scripts/snapshot.mjs",
+    "e2e": "node e2e/smoke.cjs"
   },
   "devDependencies": {
     "gh-pages": "^6.1.0",
+    "playwright": "1.56.1",
     "typescript": "4.9.5"
   },
   "eslintConfig": {
-    "extends": ["react-app"]
+    "extends": [
+      "react-app"
+    ]
   },
   "browserslist": {
-    "production": [">0.2%", "not dead", "not op_mini all"],
-    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }

@@ -24,3 +24,6 @@ Thumbs.db
 
 # FastF1 cache
 cache/
+
+# Build-time API snapshot (generated in CI by frontend/scripts/snapshot.mjs)
+frontend/public/snapshot/

@@ -35,37 +35,45 @@ export const DEFAULT_MODEL_OPTIONS = {
 /**
  * Circuit library. basePace is fuel-corrected race pace in seconds (roughly
  * pole time + 2–3 s), pitLoss is the total time lost to a stop (pit-lane
- * transit + stationary time), fuelEffect is lap time per kg of fuel.
+ * transit + stationary time), fuelEffect is lap time per kg of fuel, and
+ * scRate is a rough expected number of full safety-car periods per race,
+ * estimated from recent seasons (street circuits high, permanent tracks
+ * with big run-offs low). Used by the Monte Carlo simulation.
  */
 export const CIRCUIT_PRESETS = {
-  albert_park:   { name: 'Australia — Albert Park',          basePace:  78.6, totalLaps: 58, pitLoss: 19.5, fuelEffect: 0.032 },
-  shanghai:      { name: 'China — Shanghai',                 basePace:  93.8, totalLaps: 56, pitLoss: 22.5, fuelEffect: 0.035 },
-  suzuka:        { name: 'Japan — Suzuka',                   basePace:  90.0, totalLaps: 53, pitLoss: 22.5, fuelEffect: 0.036 },
-  bahrain:       { name: 'Bahrain — Sakhir',                 basePace:  93.0, totalLaps: 57, pitLoss: 23.0, fuelEffect: 0.035 },
-  jeddah:        { name: 'Saudi Arabia — Jeddah',            basePace:  90.0, totalLaps: 50, pitLoss: 20.5, fuelEffect: 0.033 },
-  miami:         { name: 'USA — Miami',                      basePace:  89.5, totalLaps: 57, pitLoss: 21.0, fuelEffect: 0.034 },
-  imola:         { name: 'Emilia Romagna — Imola',           basePace:  77.5, totalLaps: 63, pitLoss: 28.0, fuelEffect: 0.032 },
-  monaco:        { name: 'Monaco — Monte Carlo',             basePace:  73.0, totalLaps: 78, pitLoss: 19.0, fuelEffect: 0.028 },
-  barcelona:     { name: 'Spain — Barcelona-Catalunya',      basePace:  76.5, totalLaps: 66, pitLoss: 22.0, fuelEffect: 0.034 },
-  montreal:      { name: 'Canada — Montréal',                basePace:  74.5, totalLaps: 70, pitLoss: 18.5, fuelEffect: 0.032 },
-  red_bull_ring: { name: 'Austria — Red Bull Ring',          basePace:  67.0, totalLaps: 71, pitLoss: 20.5, fuelEffect: 0.030 },
-  silverstone:   { name: 'Britain — Silverstone',            basePace:  89.5, totalLaps: 52, pitLoss: 20.5, fuelEffect: 0.036 },
-  spa:           { name: 'Belgium — Spa-Francorchamps',      basePace: 105.0, totalLaps: 44, pitLoss: 21.0, fuelEffect: 0.040 },
-  hungaroring:   { name: 'Hungary — Hungaroring',            basePace:  79.5, totalLaps: 70, pitLoss: 20.5, fuelEffect: 0.032 },
-  zandvoort:     { name: 'Netherlands — Zandvoort',          basePace:  73.0, totalLaps: 72, pitLoss: 21.5, fuelEffect: 0.031 },
-  monza:         { name: 'Italy — Monza',                    basePace:  82.0, totalLaps: 53, pitLoss: 24.0, fuelEffect: 0.034 },
-  baku:          { name: 'Azerbaijan — Baku',                basePace: 105.0, totalLaps: 51, pitLoss: 20.5, fuelEffect: 0.036 },
-  singapore:     { name: 'Singapore — Marina Bay',           basePace:  94.0, totalLaps: 62, pitLoss: 28.5, fuelEffect: 0.036 },
-  cota:          { name: 'USA — Circuit of the Americas',    basePace:  97.0, totalLaps: 56, pitLoss: 20.5, fuelEffect: 0.036 },
-  mexico_city:   { name: 'Mexico — Hermanos Rodríguez',      basePace:  79.5, totalLaps: 71, pitLoss: 22.0, fuelEffect: 0.029 },
-  interlagos:    { name: 'Brazil — Interlagos',              basePace:  73.5, totalLaps: 71, pitLoss: 21.0, fuelEffect: 0.031 },
-  las_vegas:     { name: 'USA — Las Vegas Strip',            basePace:  96.0, totalLaps: 50, pitLoss: 21.0, fuelEffect: 0.036 },
-  lusail:        { name: 'Qatar — Lusail',                   basePace:  85.0, totalLaps: 57, pitLoss: 25.0, fuelEffect: 0.034 },
-  yas_marina:    { name: 'Abu Dhabi — Yas Marina',           basePace:  86.5, totalLaps: 58, pitLoss: 21.5, fuelEffect: 0.034 },
+  albert_park:   { name: 'Australia — Albert Park',          basePace:  78.6, totalLaps: 58, pitLoss: 19.5, fuelEffect: 0.032, scRate: 1.3 },
+  shanghai:      { name: 'China — Shanghai',                 basePace:  93.8, totalLaps: 56, pitLoss: 22.5, fuelEffect: 0.035, scRate: 0.6 },
+  suzuka:        { name: 'Japan — Suzuka',                   basePace:  90.0, totalLaps: 53, pitLoss: 22.5, fuelEffect: 0.036, scRate: 0.7 },
+  bahrain:       { name: 'Bahrain — Sakhir',                 basePace:  93.0, totalLaps: 57, pitLoss: 23.0, fuelEffect: 0.035, scRate: 0.5 },
+  jeddah:        { name: 'Saudi Arabia — Jeddah',            basePace:  90.0, totalLaps: 50, pitLoss: 20.5, fuelEffect: 0.033, scRate: 1.2 },
+  miami:         { name: 'USA — Miami',                      basePace:  89.5, totalLaps: 57, pitLoss: 21.0, fuelEffect: 0.034, scRate: 0.7 },
+  imola:         { name: 'Emilia Romagna — Imola',           basePace:  77.5, totalLaps: 63, pitLoss: 28.0, fuelEffect: 0.032, scRate: 0.6 },
+  monaco:        { name: 'Monaco — Monte Carlo',             basePace:  73.0, totalLaps: 78, pitLoss: 19.0, fuelEffect: 0.028, scRate: 0.8 },
+  barcelona:     { name: 'Spain — Barcelona-Catalunya',      basePace:  76.5, totalLaps: 66, pitLoss: 22.0, fuelEffect: 0.034, scRate: 0.4 },
+  montreal:      { name: 'Canada — Montréal',                basePace:  74.5, totalLaps: 70, pitLoss: 18.5, fuelEffect: 0.032, scRate: 1.1 },
+  red_bull_ring: { name: 'Austria — Red Bull Ring',          basePace:  67.0, totalLaps: 71, pitLoss: 20.5, fuelEffect: 0.030, scRate: 0.6 },
+  silverstone:   { name: 'Britain — Silverstone',            basePace:  89.5, totalLaps: 52, pitLoss: 20.5, fuelEffect: 0.036, scRate: 0.7 },
+  spa:           { name: 'Belgium — Spa-Francorchamps',      basePace: 105.0, totalLaps: 44, pitLoss: 21.0, fuelEffect: 0.040, scRate: 0.6 },
+  hungaroring:   { name: 'Hungary — Hungaroring',            basePace:  79.5, totalLaps: 70, pitLoss: 20.5, fuelEffect: 0.032, scRate: 0.4 },
+  zandvoort:     { name: 'Netherlands — Zandvoort',          basePace:  73.0, totalLaps: 72, pitLoss: 21.5, fuelEffect: 0.031, scRate: 0.8 },
+  monza:         { name: 'Italy — Monza',                    basePace:  82.0, totalLaps: 53, pitLoss: 24.0, fuelEffect: 0.034, scRate: 0.5 },
+  baku:          { name: 'Azerbaijan — Baku',                basePace: 105.0, totalLaps: 51, pitLoss: 20.5, fuelEffect: 0.036, scRate: 1.2 },
+  singapore:     { name: 'Singapore — Marina Bay',           basePace:  94.0, totalLaps: 62, pitLoss: 28.5, fuelEffect: 0.036, scRate: 1.5 },
+  cota:          { name: 'USA — Circuit of the Americas',    basePace:  97.0, totalLaps: 56, pitLoss: 20.5, fuelEffect: 0.036, scRate: 0.5 },
+  mexico_city:   { name: 'Mexico — Hermanos Rodríguez',      basePace:  79.5, totalLaps: 71, pitLoss: 22.0, fuelEffect: 0.029, scRate: 0.6 },
+  interlagos:    { name: 'Brazil — Interlagos',              basePace:  73.5, totalLaps: 71, pitLoss: 21.0, fuelEffect: 0.031, scRate: 1.2 },
+  las_vegas:     { name: 'USA — Las Vegas Strip',            basePace:  96.0, totalLaps: 50, pitLoss: 21.0, fuelEffect: 0.036, scRate: 0.8 },
+  lusail:        { name: 'Qatar — Lusail',                   basePace:  85.0, totalLaps: 57, pitLoss: 25.0, fuelEffect: 0.034, scRate: 0.7 },
+  yas_marina:    { name: 'Abu Dhabi — Yas Marina',           basePace:  86.5, totalLaps: 58, pitLoss: 21.5, fuelEffect: 0.034, scRate: 0.4 },
 };
 
 export function compoundCliffLap(compound, cliffLap) {
   return Math.round(cliffLap * COMPOUND_MODEL[compound].cliffFactor);
+}
+
+/** Compound parameters: a calibrated circuit carries its own, presets use the defaults. */
+export function compoundsFor(circuit) {
+  return circuit.compounds || COMPOUND_MODEL;
 }
 
 /**
@@ -74,7 +82,7 @@ export function compoundCliffLap(compound, cliffLap) {
  */
 export function lapTime(circuit, options, compound, raceLap, tyreAge) {
   const { degModel, cliffLap, trackEvolution, startFuel } = { ...DEFAULT_MODEL_OPTIONS, ...options };
-  const tyre = COMPOUND_MODEL[compound];
+  const tyre = compoundsFor(circuit)[compound];
   if (!tyre) throw new Error(`Unknown compound: ${compound}`);
 
   let wear = tyre.degRate * tyreAge;
@@ -164,7 +172,9 @@ function stintTime(circuit, options, compound, startLap, length) {
  */
 export function findOptimalStrategies(circuit, options = {}, { maxStops = 2, minStint = 5, top = 5 } = {}) {
   const N = circuit.totalLaps;
-  const compounds = Object.keys(COMPOUND_MODEL);
+  // A calibrated circuit lists the compounds actually raced; don't recommend
+  // ones whose parameters are only defaults.
+  const compounds = circuit.raced || Object.keys(compoundsFor(circuit));
   const memo = new Map();
   const cost = (c, start, len) => {
     const key = `${c}|${start}|${len}`;

@@ -6,14 +6,18 @@ on:
       - main
   pull_request:
   workflow_dispatch:
+  # Refresh the offline data snapshot every Monday, after race weekends.
+  schedule:
+    - cron: '17 6 * * 1'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Deploys share one queue; each PR gets its own so runs don't cancel each other.
 concurrency:
-  group: pages
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'pages' }}
   cancel-in-progress: true
 
 jobs:
@@ -27,17 +31,27 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: frontend
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         run: npm ci
 
       - name: Run unit tests
         working-directory: frontend
         run: CI=true npm test -- --watchAll=false
+
+      # Capture live API responses so the deployed site works even when
+      # OpenF1/Jolpica are down. Never blocks a deploy.
+      - name: Snapshot live API data
+        working-directory: frontend
+        continue-on-error: true
+        timeout-minutes: 10
+        run: npm run snapshot
 
       - name: Build site
         working-directory: frontend
@@ -53,13 +67,47 @@ jobs:
         with:
           path: frontend/build
 
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        run: npm ci
+
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # Deterministic fixtures instead of live APIs, so the suite never flakes
+      # on third-party availability.
+      - name: Build with a fixture snapshot
+        working-directory: frontend
+        run: npm run snapshot:mock && npm run build
+
+      - name: End-to-end tests
+        working-directory: frontend
+        run: npm run e2e
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, e2e]
 
     steps:
       - name: Deploy to GitHub Pages

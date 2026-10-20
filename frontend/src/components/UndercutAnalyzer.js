@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
-import { getOpenF1DriverColor, distinctColor, TIRE_COMPOUNDS } from '../data/constants';
+import { getOpenF1DriverColor, distinctColor, tone, textOn, TIRE_COMPOUNDS } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -246,7 +246,7 @@ export default function UndercutAnalyzer() {
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: color1, fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 1</label>
+            <label style={{ fontSize: 11, color: tone(color1), fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 1</label>
             <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value, 10) || null)}
               disabled={!sessionKey}
               style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color1}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
@@ -259,7 +259,7 @@ export default function UndercutAnalyzer() {
             </select>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: color2, fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 2</label>
+            <label style={{ fontSize: 11, color: tone(color2), fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 2</label>
             <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value, 10) || null)}
               disabled={!sessionKey}
               style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color2}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
@@ -308,7 +308,7 @@ export default function UndercutAnalyzer() {
               return (
                 <div key={label} style={{ marginBottom: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color, width: 40 }}>{label}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: tone(color), width: 40 }}>{label}</span>
                     <div style={{ flex: 1, display: 'flex', height: 20, borderRadius: 4, overflow: 'hidden', gap: 1 }}>
                       {stints.map((s, i) => {
                         const compound = s.compound || 'UNKNOWN';
@@ -316,11 +316,11 @@ export default function UndercutAnalyzer() {
                         const width = ((s.lap_end || s.lap_start + 15) - s.lap_start + 1) / maxLap * 100;
                         return (
                           <div key={i} style={{
-                            width: `${width}%`, background: `${compColor}cc`,
+                            width: `${width}%`, background: compColor,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: 9, fontWeight: 700, color: '#fff',
-                          }}>
-                            {compound?.[0]}{compound === 'MEDIUM' ? 'ED' : compound?.slice(1, 3)?.toUpperCase()}
+                            fontSize: 9, fontWeight: 700, color: textOn(compColor), letterSpacing: '0.5px',
+                          }} title={`${compound} · laps ${s.lap_start}–${s.lap_end ?? '?'}`}>
+                            {TIRE_COMPOUNDS[compound]?.label?.toUpperCase() || compound}
                           </div>
                         );
                       })}
@@ -357,18 +357,18 @@ export default function UndercutAnalyzer() {
                     ? (w.firstPitter === 1 ? color1 : color2)
                     : w.type === 'overcut'
                       ? (w.firstPitter === 1 ? color2 : color1)
-                      : 'var(--text-muted)';
+                      : 'var(--text-soft)';
                   const typeIcon = w.type === 'neutral'
                     ? null
                     : w.type === 'undercut'
-                      ? <CheckCircle size={14} color="#27F4D2" />
+                      ? <CheckCircle size={14} color="var(--positive)" />
                       : <AlertTriangle size={14} color="#D4A800" />;
 
                   return (
                     <div key={i} style={{
                       padding: 16, borderRadius: 8,
                       background: 'var(--app-bg-alt)',
-                      border: `1px solid ${winnerColor}30`,
+                      border: `1px solid color-mix(in srgb, ${winnerColor} 20%, transparent)`,
                       borderLeft: `4px solid ${winnerColor}`,
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -382,7 +382,7 @@ export default function UndercutAnalyzer() {
                           </span>
                         </div>
                         <span style={{
-                          fontSize: 12, fontWeight: 700, color: winnerColor,
+                          fontSize: 12, fontWeight: 700, color: tone(winnerColor),
                           fontFamily: "'JetBrains Mono', monospace",
                         }}>
                           {w.effectiveGain > 0 ? '+' : ''}{w.effectiveGain.toFixed(3)}s

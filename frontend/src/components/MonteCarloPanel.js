@@ -1,7 +1,7 @@
 import React, { useDeferredValue, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
 import { Dices } from 'lucide-react';
-import { TIRE_COMPOUNDS } from '../data/constants';
+import { TIRE_COMPOUNDS, tone } from '../data/constants';
 import { simulateStrategy, formatRaceTime } from '../models/strategy';
 import { monteCarlo, pairedDelta, SC_PACE, SC_PIT_FACTOR, REACT_WINDOW } from '../models/montecarlo';
 
@@ -78,7 +78,7 @@ export default function MonteCarloPanel({ circuit, options, strategies, optimal 
           </label>
           <input type="range" min={0} max={30} value={Math.round(rate * 10)}
             onChange={e => setRateOverride(e.target.value / 10)}
-            style={{ width: '100%', accentColor: '#D4A800' }} />
+            style={{ width: '100%', accentColor: 'var(--accent)' }} />
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>
           <input type="checkbox" checked={react} onChange={e => setReact(e.target.checked)} />
@@ -108,7 +108,7 @@ export default function MonteCarloPanel({ circuit, options, strategies, optimal 
           <tbody>
             {ranked.map((s, i) => (
               <tr key={s.idx} style={{ borderTop: '1px solid var(--panel-border)', background: i === 0 ? 'var(--accent-soft)' : 'transparent' }}>
-                <td style={{ padding: '6px 8px', fontWeight: 700, color: s.color || 'var(--text-primary)', whiteSpace: 'nowrap' }}>{s.name}</td>
+                <td style={{ padding: '6px 8px', fontWeight: 700, color: s.color ? tone(s.color) : 'var(--text-primary)', whiteSpace: 'nowrap' }}>{s.name}</td>
                 <td style={{ padding: '6px 8px', color: 'var(--text-secondary)', ...mono, whiteSpace: 'nowrap' }}>{describe(s.stints)}</td>
                 <td style={{ padding: '6px 8px', ...mono }}>{formatRaceTime(s.deterministic)}</td>
                 <td style={{ padding: '6px 8px', ...mono, fontWeight: 700 }}>{formatRaceTime(s.mean)}</td>

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getSchedule, getRaceResults, getLapTimes } from '../services/jolpica';
-import { getTeamColor } from '../data/constants';
+import { getTeamColor, tone } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -94,6 +94,21 @@ export default function RaceFlow() {
 
     return { chartData: points, drivers: driverIds };
   }, [lapData, driverInfo]);
+
+  // Teammates share a team colour, so the second driver of each team (by
+  // finishing order) gets a dashed line, as broadcast graphics do.
+  const dashedDrivers = useMemo(() => {
+    const seenTeams = new Set();
+    const dashed = new Set();
+    [...drivers]
+      .sort((a, b) => (driverInfo[a]?.finalPos || 99) - (driverInfo[b]?.finalPos || 99))
+      .forEach(id => {
+        const team = driverInfo[id]?.team;
+        if (seenTeams.has(team)) dashed.add(id);
+        seenTeams.add(team);
+      });
+    return dashed;
+  }, [drivers, driverInfo]);
 
   // Filtered drivers for top-10 mode
   const visibleDrivers = useMemo(() => {
@@ -246,7 +261,7 @@ export default function RaceFlow() {
                   <span key={r.Driver?.driverId} style={{
                     padding: '4px 12px', borderRadius: 6, fontSize: 12, fontWeight: 600,
                     background: i === 0 ? 'rgba(212,168,0,0.15)' : i === 1 ? 'rgba(138,138,138,0.15)' : 'rgba(166,102,40,0.15)',
-                    color: i === 0 ? '#D4A800' : i === 1 ? '#8A8A8A' : '#A66628',
+                    color: tone(i === 0 ? '#D4A800' : i === 1 ? '#8A8A8A' : '#A66628'),
                     border: `1px solid ${i === 0 ? 'rgba(212,168,0,0.35)' : i === 1 ? 'rgba(138,138,138,0.35)' : 'rgba(166,102,40,0.35)'}`,
                   }}>
                     P{i + 1} {getFlag(r.Driver?.nationality)} {r.Driver?.code || r.Driver?.familyName?.substring(0, 3).toUpperCase()}
@@ -299,6 +314,7 @@ export default function RaceFlow() {
                     <Line
                       key={driverId} type="monotone" dataKey={driverId}
                       stroke={color}
+                      strokeDasharray={dashedDrivers.has(driverId) ? '6 4' : undefined}
                       strokeWidth={highlightDriver === driverId ? 3.5 : isHighlighted ? 2 : 1}
                       strokeOpacity={highlightDriver && !isHighlighted ? 0.12 : 0.85}
                       dot={false} connectNulls={false} isAnimationActive={false}
@@ -333,7 +349,7 @@ export default function RaceFlow() {
                           padding: '6px 10px', borderRadius: 6, cursor: 'pointer',
                           background: highlightDriver === driverId ? 'var(--surface-hover)' : 'transparent',
                           opacity: highlightDriver && !isActive ? 0.4 : 1,
-                          borderLeft: `3px solid ${color}`,
+                          borderLeft: `3px ${dashedDrivers.has(driverId) ? 'dashed' : 'solid'} ${color}`,
                           transition: 'all 0.15s ease',
                         }}
                       >
@@ -349,7 +365,7 @@ export default function RaceFlow() {
                         </span>
                         <span style={{
                           fontSize: 10, fontWeight: 700,
-                          color: gained > 0 ? '#27F4D2' : gained < 0 ? 'var(--accent)' : 'var(--text-muted)',
+                          color: gained > 0 ? 'var(--positive)' : gained < 0 ? 'var(--accent-text)' : 'var(--text-muted)',
                           fontFamily: "'JetBrains Mono', monospace", width: 28, textAlign: 'right',
                         }}>
                           {gained > 0 ? `+${gained}` : gained === 0 ? '—' : `${gained}`}

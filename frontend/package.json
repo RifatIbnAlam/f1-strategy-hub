@@ -1,7 +1,7 @@
 {
-  "name": "f1-strategy-hub",
+  "name": "undercut",
   "version": "2.0.0",
-  "description": "F1 Strategy & Analytics Hub - Live telemetry, race strategy simulation, and historical analytics powered by OpenF1 & Jolpica APIs",
+  "description": "Undercut: F1 race strategy and telemetry analytics (strategy optimiser, safety-car Monte Carlo, models calibrated on real races) powered by OpenF1 and Jolpica",
   "private": true,
   "homepage": "https://rifatibnalam.github.io/f1-strategy-hub",
   "dependencies": {

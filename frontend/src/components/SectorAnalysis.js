@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getRaceSessions, getDrivers, getLaps, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
-import { getOpenF1DriverColor, distinctColor } from '../data/constants';
+import { getOpenF1DriverColor, distinctColor, tone } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -169,7 +169,7 @@ export default function SectorAnalysis() {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 10, color: color1, fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 1</label>
+          <label style={{ fontSize: 10, color: tone(color1), fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 1</label>
           <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value, 10) || null)}
             disabled={!sessionKey}
             style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color1}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
@@ -182,7 +182,7 @@ export default function SectorAnalysis() {
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 10, color: color2, fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 2</label>
+          <label style={{ fontSize: 10, color: tone(color2), fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 2</label>
           <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value, 10) || null)}
             disabled={!sessionKey}
             style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color2}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
@@ -222,7 +222,7 @@ export default function SectorAnalysis() {
                         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8,
                         border: faster === 1 ? `2px solid ${color1}` : `1px solid ${color1}33`,
                       }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: color1, fontFamily: "'JetBrains Mono', monospace" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: tone(color1), fontFamily: "'JetBrains Mono', monospace" }}>
                           {formatTime(s.d1)}
                         </span>
                       </div>
@@ -231,14 +231,14 @@ export default function SectorAnalysis() {
                         display: 'flex', alignItems: 'center', paddingLeft: 8,
                         border: faster === 2 ? `2px solid ${color2}` : `1px solid ${color2}33`,
                       }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: color2, fontFamily: "'JetBrains Mono', monospace" }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: tone(color2), fontFamily: "'JetBrains Mono', monospace" }}>
                           {formatTime(s.d2)}
                         </span>
                       </div>
                     </div>
                     <span style={{
                       fontSize: 11, fontWeight: 700, width: 70, textAlign: 'right',
-                      color: s.delta > 0 ? color1 : s.delta < 0 ? color2 : 'var(--text-muted)',
+                      color: s.delta > 0 ? tone(color1) : s.delta < 0 ? tone(color2) : 'var(--text-muted)',
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
                       {s.delta > 0 ? `D1 ${(-s.delta * 1000).toFixed(0)}ms` : s.delta < 0 ? `D2 ${(s.delta * 1000).toFixed(0)}ms` : 'EQUAL'}
@@ -259,7 +259,7 @@ export default function SectorAnalysis() {
               </span>
               <span style={{
                 fontSize: 14, fontWeight: 800,
-                color: sectorData.totalDelta > 0 ? color1 : color2,
+                color: tone(sectorData.totalDelta > 0 ? color1 : color2),
                 fontFamily: "'JetBrains Mono', monospace",
               }}>
                 {d1Info?.name_acronym || `#${driver1}`} {sectorData.totalDelta > 0 ? 'faster' : 'slower'} by {Math.abs(sectorData.totalDelta * 1000).toFixed(0)}ms/lap
@@ -315,20 +315,20 @@ export default function SectorAnalysis() {
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>{s.sector}</div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 6 }}>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: color1, fontFamily: "'JetBrains Mono', monospace" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: tone(color1), fontFamily: "'JetBrains Mono', monospace" }}>
                         {formatTime(s.d1)}
                       </div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d1Info?.name_acronym || `D1`}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: color2, fontFamily: "'JetBrains Mono', monospace" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: tone(color2), fontFamily: "'JetBrains Mono', monospace" }}>
                         {formatTime(s.d2)}
                       </div>
                       <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{d2Info?.name_acronym || `D2`}</div>
                     </div>
                   </div>
                   <div style={{
-                    fontSize: 10, fontWeight: 700, color: winColor,
+                    fontSize: 10, fontWeight: 700, color: tone(winColor),
                     fontFamily: "'JetBrains Mono', monospace",
                   }}>
                     Δ {Math.abs(s.delta * 1000).toFixed(0)}ms

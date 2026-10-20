@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, ReferenceLine, Area, AreaChart, Legend,
 } from 'recharts';
 import { Timer, Plus, Trash2, Settings, Zap, AlertTriangle, Cpu, Wand2 } from 'lucide-react';
-import { TIRE_COMPOUNDS, DRY_COMPOUNDS } from '../data/constants';
+import { TIRE_COMPOUNDS, DRY_COMPOUNDS, tone } from '../data/constants';
 import {
   CIRCUIT_PRESETS,
   DEFAULT_MODEL_OPTIONS,
@@ -16,6 +16,7 @@ import {
 import RealTireData from './RealTireData';
 import ModelCalibration from './ModelCalibration';
 import MonteCarloPanel from './MonteCarloPanel';
+import { toneLegend } from './chartUtils';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -98,7 +99,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
     </div>
     {index > 0 && (
       <button onClick={() => onRemove(index)} aria-label={`Remove stint ${index + 1}`} style={{
-        background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4,
+        background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-text)', padding: 4,
       }}>
         <Trash2 size={14} />
       </button>
@@ -106,7 +107,9 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
   </div>
 );
 
-const STRATEGY_COLORS = ['#e10600', '#3671C6'];
+// Strategy series colours: the app's brand red and a violet that no team
+// uses, so plans are never mistaken for a team's data.
+const STRATEGY_COLORS = ['#e10600', '#8b5cf6'];
 
 /* ─── Strategy Simulator ──────────────────────────────────────────────────── */
 export default function StrategySimulator() {
@@ -304,7 +307,7 @@ export default function StrategySimulator() {
             </label>
             <input type="range" min={-60} max={20} value={Math.round(trackEvolution * 1000)}
               onChange={e => setTrackEvolution(e.target.value / 1000)}
-              style={{ width: '100%', accentColor: '#27F4D2' }}
+              style={{ width: '100%', accentColor: 'var(--accent)' }}
             />
           </div>
           <div>
@@ -313,7 +316,7 @@ export default function StrategySimulator() {
             </label>
             <input type="range" min={60} max={110} value={startFuel}
               onChange={e => setStartFuel(parseInt(e.target.value, 10))}
-              style={{ width: '100%', accentColor: '#FF8000' }}
+              style={{ width: '100%', accentColor: 'var(--accent)' }}
             />
           </div>
         </div>
@@ -334,7 +337,7 @@ export default function StrategySimulator() {
               display: 'grid', gridTemplateColumns: '24px minmax(120px, 1fr) auto', alignItems: 'center', gap: 12,
               padding: '10px 12px', borderRadius: 8, background: 'var(--app-bg-alt)',
             }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? '#D4A800' : 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? 'var(--warning)' : 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                 {i + 1}
               </span>
               <div>
@@ -343,14 +346,14 @@ export default function StrategySimulator() {
                   {r.stints.map(s => `${TIRE_COMPOUNDS[s.compound].label[0]}${s.laps}`).join(' → ')}
                   <span style={{ color: 'var(--text-muted)' }}> · {r.pitStops} stop{r.pitStops !== 1 ? 's' : ''}</span>
                   <span style={{ color: 'var(--text-muted)' }}> · {formatRaceTime(r.totalTime)}</span>
-                  {i > 0 && <span style={{ color: 'var(--accent)' }}> (+{(r.totalTime - bestTime).toFixed(1)}s)</span>}
+                  {i > 0 && <span style={{ color: 'var(--accent-text)' }}> (+{(r.totalTime - bestTime).toFixed(1)}s)</span>}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 {strategies.map((s, si) => (
                   <button key={si} onClick={() => loadStrategy(si, r.stints)} title={`Load into ${s.name}`} style={{
                     padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                    background: 'transparent', color: STRATEGY_COLORS[si], border: `1px solid ${STRATEGY_COLORS[si]}66`,
+                    background: 'transparent', color: tone(STRATEGY_COLORS[si]), border: `1px solid ${STRATEGY_COLORS[si]}66`,
                   }}>
                     → {s.name.slice(-1)}
                   </button>
@@ -367,7 +370,7 @@ export default function StrategySimulator() {
           <Card key={si} style={{ borderTop: `3px solid ${strat.color}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 8, flexWrap: 'wrap' }}>
               <div>
-                <span style={{ fontSize: 16, fontWeight: 700, color: strat.color }}>{strat.name}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: tone(strat.color) }}>{strat.name}</span>
                 <span style={{
                   fontSize: 11, color: 'var(--text-muted)', marginLeft: 8,
                   fontFamily: "'JetBrains Mono', monospace",
@@ -394,7 +397,7 @@ export default function StrategySimulator() {
             {strat.issues.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
                 {strat.issues.map(issue => (
-                  <span key={issue} style={{ fontSize: 11, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span key={issue} style={{ fontSize: 11, color: 'var(--accent-text)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <AlertTriangle size={12} /> {issue}
                   </span>
                 ))}
@@ -490,7 +493,7 @@ export default function StrategySimulator() {
                 labelFormatter={l => `Lap ${l}`}
                 formatter={(v, name) => [`${Number(v).toFixed(3)}s`, name]}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Legend formatter={toneLegend} wrapperStyle={{ fontSize: 12 }} />
               {simData.map((s, i) => (
                 <Line
                   key={i}
@@ -529,8 +532,8 @@ export default function StrategySimulator() {
               <Area
                 type="monotone"
                 dataKey="gap"
-                stroke="#3671C6"
-                fill="#3671C620"
+                stroke={STRATEGY_COLORS[1]}
+                fill={`${STRATEGY_COLORS[1]}20`}
                 strokeWidth={2}
                 isAnimationActive={false}
               />

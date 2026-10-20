@@ -10,6 +10,7 @@ import {
   cleanRaceLaps, fitRaceModel, backtest, estimatePitLoss, finishingOrder, actualStrategy, toSimulatorCircuit,
 } from '../models/calibration';
 import { COMPOUND_MODEL, simulateStrategy, findOptimalStrategies, formatRaceTime } from '../models/strategy';
+import { toneLegend } from './chartUtils';
 
 const FUEL_EFFECT = 0.033;
 const START_FUEL = 100;
@@ -161,12 +162,12 @@ export default function ModelCalibration({ onApply }) {
         </div>
       )}
       {prevMissing && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-text)', fontSize: 12 }}>
           <AlertTriangle size={14} /> No {year - 1} race at this circuit in OpenF1. Switch to in-sample, or pick another race.
         </div>
       )}
       {result?.error && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-text)', fontSize: 12 }}>
           <AlertTriangle size={14} /> {result.error}
         </div>
       )}
@@ -237,7 +238,7 @@ export default function ModelCalibration({ onApply }) {
                 labelFormatter={l => `Lap ${l}`}
                 formatter={(v, n) => [`${Number(v).toFixed(3)}s`, n]}
               />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Legend formatter={toneLegend} wrapperStyle={{ fontSize: 11 }} />
               <Scatter dataKey="actual" name="Actual" fill="var(--text-secondary)" r={2} />
               <Line dataKey="predicted" name="Model" stroke="var(--accent)" dot={false} strokeWidth={2} isAnimationActive={false} />
             </ComposedChart>
@@ -269,8 +270,8 @@ export default function ModelCalibration({ onApply }) {
                     {result.winnerSim && (() => {
                       const gap = result.winnerSim.totalTime - result.optimal[0].totalTime;
                       return gap > 0.05
-                        ? <span style={{ color: 'var(--accent)' }}> ({gap.toFixed(1)}s faster than the winner's plan)</span>
-                        : <span style={{ color: '#00C853' }}> (the winner's plan is optimal under the model)</span>;
+                        ? <span style={{ color: 'var(--accent-text)' }}> ({gap.toFixed(1)}s faster than the winner's plan)</span>
+                        : <span style={{ color: 'var(--positive)' }}> (the winner's plan is optimal under the model)</span>;
                     })()}
                   </div>
                 </>

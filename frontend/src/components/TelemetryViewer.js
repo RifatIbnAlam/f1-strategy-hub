@@ -5,11 +5,12 @@ import {
 } from 'recharts';
 import { useApi } from '../hooks/useApi';
 import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
-import { getOpenF1DriverColor, TIRE_COMPOUNDS } from '../data/constants';
+import { getOpenF1DriverColor, TIRE_COMPOUNDS, tone } from '../data/constants';
 import { Activity, Loader, Radio, Gauge, Cpu } from 'lucide-react';
 import { getFlag } from '../data/flags';
 import SectorAnalysis from './SectorAnalysis';
 import CarTelemetry from './CarTelemetry';
+import { toneLegend } from './chartUtils';
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -67,11 +68,11 @@ const LapTimeTable = ({ laps, stints, selectedLap, onSelectLap }) => {
                 <td style={{
                   padding: '6px', fontSize: 12,
                   fontFamily: "'JetBrains Mono', monospace",
-                  color: isBest ? '#a855f7' : 'var(--text-primary)',
+                  color: isBest ? tone('#a855f7') : 'var(--text-primary)',
                   fontWeight: isBest ? 700 : 400,
                 }}>
                   {formatTime(lap.lap_duration)}
-                  {isBest && <span style={{ marginLeft: 4, fontSize: 10, color: '#a855f7' }}>BEST</span>}
+                  {isBest && <span style={{ marginLeft: 4, fontSize: 10, color: tone('#a855f7') }}>BEST</span>}
                 </td>
                 <td style={{ padding: '6px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
                   {formatTime(lap.duration_sector_1)}
@@ -87,7 +88,7 @@ const LapTimeTable = ({ laps, stints, selectedLap, onSelectLap }) => {
                     fontSize: 10, fontWeight: 600,
                     padding: '2px 6px', borderRadius: 4,
                     background: `${compoundColor}20`,
-                    color: compoundColor,
+                    color: tone(compoundColor),
                     border: `1px solid ${compoundColor}40`,
                   }}>
                     {compound}
@@ -253,7 +254,7 @@ export default function TelemetryViewer() {
           <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Fetching telemetry data from OpenF1...</div>
         </Card>
       ) : laps && laps.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px, 100%), 1fr))', gap: 24 }}>
           {/* Lap Time Chart */}
           <Card style={{ gridColumn: '1 / -1' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
@@ -276,7 +277,7 @@ export default function TelemetryViewer() {
                   labelFormatter={l => `Lap ${l}`}
                   formatter={(v) => [`${v.toFixed(3)}s`]}
                 />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Legend formatter={toneLegend} wrapperStyle={{ fontSize: 12 }} />
                 <Line type="monotone" dataKey="time" stroke={driverColor} strokeWidth={2} dot={{ r: 2, fill: driverColor }} name="Lap Time" />
               </LineChart>
             </ResponsiveContainer>
@@ -291,12 +292,16 @@ export default function TelemetryViewer() {
               <LineChart data={lapChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
                 <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
-                <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={v => `${v.toFixed(1)}s`} />
-                <Tooltip contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }} />
+                <YAxis stroke="var(--text-muted)" fontSize={11} domain={['auto', 'auto']} tickFormatter={v => `${v.toFixed(1)}s`} />
+                <Tooltip
+                  contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
+                  labelFormatter={l => `Lap ${l}`}
+                  formatter={(v, n) => [`${Number(v).toFixed(3)}s`, n]}
+                />
                 <Line type="monotone" dataKey="s1" stroke="#FF1E1E" dot={false} strokeWidth={1.5} name="Sector 1" />
                 <Line type="monotone" dataKey="s2" stroke="#D4A800" dot={false} strokeWidth={1.5} name="Sector 2" />
-                <Line type="monotone" dataKey="s3" stroke="#00FF87" dot={false} strokeWidth={1.5} name="Sector 3" />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="s3" stroke="#00C853" dot={false} strokeWidth={1.5} name="Sector 3" />
+                <Legend formatter={toneLegend} wrapperStyle={{ fontSize: 12 }} />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -351,7 +356,7 @@ export default function TelemetryViewer() {
               <Cpu size={16} color="var(--accent)" />
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 Car Telemetry, Lap {activeLap?.lap_number}
-                {activeLap === fastestLap && <span style={{ marginLeft: 8, fontSize: 10, color: '#a855f7' }}>FASTEST</span>}
+                {activeLap === fastestLap && <span style={{ marginLeft: 8, fontSize: 10, color: tone('#a855f7') }}>FASTEST</span>}
               </h3>
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>

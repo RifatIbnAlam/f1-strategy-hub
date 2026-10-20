@@ -1,63 +1,46 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
- * Custom hook for API calls with loading/error states and caching
+ * Custom hook for API calls with loading/error states.
+ *
+ * - When `enabled` turns false the previous data is cleared, so a view never
+ *   shows the last driver's laps under a newly selected session.
+ * - Responses from superseded requests are dropped, so quickly switching
+ *   selections can't let a slow, older response overwrite a newer one.
  */
 export function useApi(fetchFn, deps = [], enabled = true) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const requestId = useRef(0);
 
   const execute = useCallback(async () => {
-    if (!enabled) return;
+    const id = ++requestId.current;
+    if (!enabled) {
+      setData(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const result = await fetchFn();
-      setData(result);
+      if (id === requestId.current) setData(result);
     } catch (err) {
-      setError(err.message || 'An error occurred');
-      console.error('API Error:', err);
+      if (id === requestId.current) {
+        setData(null);
+        setError(err.message || 'An error occurred');
+      }
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, enabled]);
 
   useEffect(() => {
     execute();
   }, [execute]);
 
   return { data, loading, error, refetch: execute };
-}
-
-/**
- * Format a lap time from seconds to MM:SS.mmm
- */
-export function formatLapTime(seconds) {
-  if (!seconds || seconds <= 0) return '--:--.---';
-  const mins = Math.floor(seconds / 60);
-  const secs = (seconds % 60).toFixed(3);
-  return `${mins}:${secs.padStart(6, '0')}`;
-}
-
-/**
- * Format seconds to a gap string (+X.XXXs)
- */
-export function formatGap(seconds) {
-  if (!seconds) return '--';
-  if (seconds === 0) return 'LEADER';
-  return `+${seconds.toFixed(3)}s`;
-}
-
-/**
- * Parse an ISO time string to seconds
- */
-export function timeToSeconds(timeStr) {
-  if (!timeStr) return null;
-  const parts = timeStr.split(':');
-  if (parts.length === 2) {
-    return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
-  }
-  return parseFloat(timeStr);
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
-import { getSessions, getDrivers, getLaps } from '../services/openf1';
-import { getDriverColor } from '../data/constants';
+import { getRaceSessions, getDrivers, getLaps, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
+import { getOpenF1DriverColor, distinctColor } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -12,14 +12,6 @@ import { Layers, Loader } from 'lucide-react';
 function formatTime(s) {
   if (!s || s <= 0) return '---';
   return s < 60 ? `${s.toFixed(3)}s` : `${Math.floor(s / 60)}:${(s % 60).toFixed(3).padStart(6, '0')}`;
-}
-
-function formatSessionLabel(session) {
-  const name = session.meeting_name?.trim() || session.circuit_short_name || `Session ${session.session_key}`;
-  const date = session.date_start
-    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
-  return date ? `${name} (${date})` : name;
 }
 
 const Card = ({ children, style }) => (
@@ -37,7 +29,7 @@ export default function SectorAnalysis() {
   const [driver2, setDriver2] = useState(null);
 
   const { data: sessions, loading: sessLoad } = useApi(
-    () => getSessions(year, 'Race'), [year]
+    () => getRaceSessions(year), [year]
   );
 
   const { data: drivers, loading: drvLoad } = useApi(
@@ -55,36 +47,31 @@ export default function SectorAnalysis() {
     [sessionKey, driver2], !!(sessionKey && driver2)
   );
 
-  const uniqueDrivers = useMemo(() => {
-    if (!drivers) return [];
-    const seen = new Set();
-    return drivers.filter(d => { if (seen.has(d.driver_number)) return false; seen.add(d.driver_number); return true; });
-  }, [drivers]);
-
-  const sessionOpts = useMemo(() => {
-    if (!sessions) return [];
-    return [...sessions].sort((a, b) => (b.date_start ? new Date(b.date_start).getTime() : 0) - (a.date_start ? new Date(a.date_start).getTime() : 0));
-  }, [sessions]);
+  const uniqueDrivers = useMemo(() => dedupeDrivers(drivers), [drivers]);
+  const sessionOpts = sessions || [];
 
   const d1Info = uniqueDrivers.find(d => d.driver_number === driver1);
   const d2Info = uniqueDrivers.find(d => d.driver_number === driver2);
-  const color1 = getDriverColor(driver1);
-  const color2 = getDriverColor(driver2);
+  const color1 = getOpenF1DriverColor(d1Info);
+  const color2 = distinctColor(getOpenF1DriverColor(d2Info), color1);
 
   // Sector analysis
   const sectorData = useMemo(() => {
     if (!laps1?.length || !laps2?.length) return null;
 
-    const valid1 = laps1.filter(l => l.duration_sector_1 > 0 && l.duration_sector_2 > 0 && l.duration_sector_3 > 0 && l.lap_duration > 10 && l.lap_duration < 200);
-    const valid2 = laps2.filter(l => l.duration_sector_1 > 0 && l.duration_sector_2 > 0 && l.duration_sector_3 > 0 && l.lap_duration > 10 && l.lap_duration < 200);
+    // Pit out-laps carry pit-lane time in S1; exclude them along with lap 1.
+    const isValid = l => l.duration_sector_1 > 0 && l.duration_sector_2 > 0 && l.duration_sector_3 > 0 &&
+      l.lap_duration > 10 && l.lap_duration < 200 && !l.is_pit_out_lap && l.lap_number > 1;
+    const valid1 = laps1.filter(isValid);
+    const valid2 = laps2.filter(isValid);
 
     if (!valid1.length || !valid2.length) return null;
 
     // Average sector times (trimmed mean — remove top/bottom 10%)
     const trimmedMean = (arr) => {
       const sorted = [...arr].sort((a, b) => a - b);
-      const trim = Math.max(1, Math.floor(sorted.length * 0.1));
-      const trimmed = sorted.slice(trim, -trim);
+      const trim = Math.floor(sorted.length * 0.1);
+      const trimmed = trim > 0 ? sorted.slice(trim, sorted.length - trim) : sorted;
       return trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
     };
 
@@ -166,7 +153,7 @@ export default function SectorAnalysis() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12, marginBottom: 20 }}>
         <div>
           <label style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>YEAR</label>
-          <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSessionKey(null); setDriver1(null); setDriver2(null); }}
+          <select value={year} onChange={e => { setYear(parseInt(e.target.value, 10)); setSessionKey(null); setDriver1(null); setDriver2(null); }}
             style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
             {Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
@@ -183,7 +170,7 @@ export default function SectorAnalysis() {
         </div>
         <div>
           <label style={{ fontSize: 10, color: color1, fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 1</label>
-          <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value))}
+          <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value, 10) || null)}
             disabled={!sessionKey}
             style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color1}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
             <option value="">Select...</option>
@@ -196,7 +183,7 @@ export default function SectorAnalysis() {
         </div>
         <div>
           <label style={{ fontSize: 10, color: color2, fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER 2</label>
-          <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value))}
+          <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value, 10) || null)}
             disabled={!sessionKey}
             style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color2}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
             <option value="">Select...</option>

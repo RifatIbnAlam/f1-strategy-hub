@@ -24,7 +24,15 @@ async function fetchWithCache(endpoint, params = {}) {
   }
 
   try {
-    const response = await fetch(url);
+    // OpenF1's free tier is rate limited (a few requests per second), and
+    // views like the undercut analyzer fire several calls at once. Back off
+    // and retry on HTTP 429 instead of failing the whole view.
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(url);
+      if (response.status !== 429) break;
+      await new Promise(resolve => setTimeout(resolve, 700 * 2 ** attempt));
+    }
     if (!response.ok) throw new Error(`OpenF1 API error: ${response.status}`);
     const data = await response.json();
 
@@ -45,6 +53,63 @@ export async function getSessions(year, sessionType = null) {
   const params = { year };
   if (sessionType) params.session_type = sessionType;
   return fetchWithCache('/sessions', params);
+}
+
+/**
+ * Get meetings (Grand Prix weekends) for a year. /sessions has no
+ * meeting_name, so this is used to label sessions with their event name.
+ */
+export async function getMeetings(year) {
+  return fetchWithCache('/meetings', { year });
+}
+
+/**
+ * Race-type sessions (Grand Prix and Sprint) for a year that have already
+ * started, newest first, each enriched with its meeting_name.
+ */
+export async function getRaceSessions(year) {
+  const [sessions, meetings] = await Promise.all([
+    fetchWithCache('/sessions', { year, session_type: 'Race' }),
+    getMeetings(year).catch(() => []),
+  ]);
+  const names = {};
+  (meetings || []).forEach(m => { names[m.meeting_key] = m.meeting_name; });
+  const now = Date.now();
+  return (sessions || [])
+    .filter(s => !s.date_start || new Date(s.date_start).getTime() <= now)
+    .map(s => ({ ...s, meeting_name: s.meeting_name || names[s.meeting_key] }))
+    .sort((a, b) => new Date(b.date_start || 0) - new Date(a.date_start || 0));
+}
+
+/**
+ * Human-readable session label: "Italian Grand Prix — Race (Sep 7)".
+ */
+export function formatSessionLabel(session) {
+  const event = session.meeting_name?.trim()
+    || [session.location, session.country_name].filter(Boolean).join(', ')
+    || session.circuit_short_name
+    || `Session ${session.session_key}`;
+  const name = session.session_name?.trim() || 'Race';
+  const date = session.date_start
+    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
+  return `${event} — ${name}${date ? ` (${date})` : ''}`;
+}
+
+/**
+ * OpenF1 returns one driver row per session; dedupe by driver number and
+ * sort by team so teammates sit together in dropdowns.
+ */
+export function uniqueDrivers(drivers) {
+  if (!drivers) return [];
+  const seen = new Set();
+  return drivers
+    .filter(d => {
+      if (seen.has(d.driver_number)) return false;
+      seen.add(d.driver_number);
+      return true;
+    })
+    .sort((a, b) => (a.team_name || '').localeCompare(b.team_name || '') || a.driver_number - b.driver_number);
 }
 
 /**
@@ -206,6 +271,8 @@ export async function getTeamRadio(sessionKey, driverNumber = null) {
 
 export const openf1 = {
   getSessions,
+  getMeetings,
+  getRaceSessions,
   getLatestSession,
   getDrivers,
   getLaps,

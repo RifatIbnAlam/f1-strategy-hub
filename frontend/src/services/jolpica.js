@@ -36,6 +36,18 @@ async function fetchAllPages(basePath, extractFn) {
   return all;
 }
 
+/**
+ * Jolpica enforces a burst limit (~4 req/s). Paginated season queries can trip
+ * it, so back off and retry a couple of times on HTTP 429.
+ */
+async function fetchWithRetry(url, attempts = 3) {
+  for (let i = 0; ; i++) {
+    const response = await fetch(url);
+    if (response.status !== 429 || i >= attempts - 1) return response;
+    await new Promise(resolve => setTimeout(resolve, 600 * 2 ** i));
+  }
+}
+
 async function fetchJolpica(path) {
   const [pathname, queryString] = path.split('?');
   const url = `${BASE_URL}${pathname}.json${queryString ? `?${queryString}` : ''}`;
@@ -45,7 +57,7 @@ async function fetchJolpica(path) {
   }
 
   try {
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
     if (!response.ok) throw new Error(`Jolpica API error: ${response.status}`);
     const data = await response.json();
     const result = data.MRData;
@@ -90,6 +102,26 @@ export async function getRaceResults(year, round = null) {
       merged[race.round] = { ...race, Results: [...(race.Results || [])] };
     } else {
       merged[race.round].Results.push(...(race.Results || []));
+    }
+  }
+  return Object.values(merged).sort((a, b) => parseInt(a.round) - parseInt(b.round));
+}
+
+/**
+ * Get sprint results for a whole season. Sprint points count toward the
+ * championship, so any points-progression chart must include them.
+ */
+export async function getSprintResults(year) {
+  const allResults = await fetchAllPages(
+    `/${year}/sprint`,
+    data => data?.RaceTable?.Races || []
+  );
+  const merged = {};
+  for (const race of allResults) {
+    if (!merged[race.round]) {
+      merged[race.round] = { ...race, SprintResults: [...(race.SprintResults || [])] };
+    } else {
+      merged[race.round].SprintResults.push(...(race.SprintResults || []));
     }
   }
   return Object.values(merged).sort((a, b) => parseInt(a.round) - parseInt(b.round));
@@ -287,6 +319,7 @@ export async function getSeasons(limit = 100) {
 export const jolpica = {
   getSchedule,
   getRaceResults,
+  getSprintResults,
   getLastRaceResult,
   getDriverStandings,
   getConstructorStandings,

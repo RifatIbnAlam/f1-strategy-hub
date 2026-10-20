@@ -5,8 +5,8 @@ import {
   Cell,
 } from 'recharts';
 import { useApi } from '../hooks/useApi';
-import { getDriverStandings, getRaceResults, getQualifyingResults } from '../services/jolpica';
-import { getTeamColor } from '../data/constants';
+import { getDriverStandings, getRaceResults, getSprintResults } from '../services/jolpica';
+import { getTeamColor, currentConstructor, distinctColor } from '../data/constants';
 import { GitCompare, Search, Loader, Trophy, Flag, Award, TrendingUp } from 'lucide-react';
 import { getFlag } from '../data/flags';
 import TeamBadge from './TeamBadge';
@@ -28,8 +28,15 @@ const ChartTitle = ({ title, subtitle }) => (
   </div>
 );
 
+// Jolpica marks retirements/DSQs with a non-numeric positionText (R, D, W, N…).
+// Newer seasons report lapped finishers as "Lapped" rather than "+1 Lap", so
+// the status string alone is not a reliable DNF signal.
+const isClassified = (r) => /^\d+$/.test(r?.positionText || '');
+
+const shortRaceName = (name) => name?.replace(' Grand Prix', '').substring(0, 10);
+
 /* ─── Driver Selector ────────────────────────────────────────────────────── */
-const DriverSelector = ({ drivers, selected, onSelect, label, color }) => (
+const DriverSelector = ({ drivers, selected, onSelect, label, color, exclude }) => (
   <div>
     <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 8, display: 'block' }}>
       {label}
@@ -44,9 +51,9 @@ const DriverSelector = ({ drivers, selected, onSelect, label, color }) => (
       }}
     >
       <option value="">Select a driver...</option>
-      {drivers.map(d => (
+      {drivers.filter(d => d.Driver.driverId !== exclude).map(d => (
         <option key={d.Driver.driverId} value={d.Driver.driverId}>
-          {getFlag(d.Driver.nationality)} {d.Driver.givenName} {d.Driver.familyName} — {d.Constructors?.[0]?.name}
+          {getFlag(d.Driver.nationality)} {d.Driver.givenName} {d.Driver.familyName} — {currentConstructor(d)?.name}
         </option>
       ))}
     </select>
@@ -105,9 +112,8 @@ const ResultDistribution = ({ results, driverId, color, name }) => {
     results.forEach(race => {
       const r = race.Results?.find(r => r.Driver?.driverId === driverId);
       if (!r) return;
-      const pos = parseInt(r.position);
-      const status = r.status;
-      if (status !== 'Finished' && !status?.startsWith('+')) { dnfs++; return; }
+      const pos = parseInt(r.position, 10);
+      if (!isClassified(r)) { dnfs++; return; }
       if (pos === 1) wins++;
       else if (pos <= 3) podiums++;
       else if (pos <= 10) points++;
@@ -120,9 +126,9 @@ const ResultDistribution = ({ results, driverId, color, name }) => {
 
   const segments = [
     { key: 'wins',    count: stats.wins,    label: 'Wins',    color: '#D4A800' },
-    { key: 'podiums', count: stats.podiums,  label: 'Podiums', color },
-    { key: 'points',  count: stats.points,   label: 'Points',  color: `${color}88` },
-    { key: 'outside', count: stats.outside,  label: 'Outside', color: 'var(--app-bg-alt)' },
+    { key: 'podiums', count: stats.podiums,  label: 'P2–P3',   color },
+    { key: 'points',  count: stats.points,   label: 'P4–P10',  color: `${color}88` },
+    { key: 'outside', count: stats.outside,  label: 'P11+',    color: 'var(--app-bg-alt)' },
     { key: 'dnfs',    count: stats.dnfs,     label: 'DNF',     color: 'var(--accent)' },
   ].filter(s => s.count > 0);
 
@@ -186,13 +192,14 @@ export default function DriverComparison() {
   const currentYear = new Date().getFullYear();
   const { data: standings, loading } = useApi(() => getDriverStandings('current'), []);
   const { data: results } = useApi(() => getRaceResults(currentYear), []);
-  const { data: qualifyingRaces } = useApi(() => getQualifyingResults(currentYear), []);
+  const { data: sprints } = useApi(() => getSprintResults(currentYear), []);
 
   const driver1 = standings?.find(d => d.Driver.driverId === driver1Id);
   const driver2 = standings?.find(d => d.Driver.driverId === driver2Id);
 
-  const color1 = driver1 ? getTeamColor(driver1.Constructors?.[0]?.name) : '#e10600';
-  const color2 = driver2 ? getTeamColor(driver2.Constructors?.[0]?.name) : '#3671C6';
+  const color1 = driver1 ? getTeamColor(currentConstructor(driver1)?.constructorId) : '#e10600';
+  // Teammates share a colour; switch driver 2 to a contrasting one.
+  const color2 = distinctColor(driver2 ? getTeamColor(currentConstructor(driver2)?.constructorId) : '#3671C6', color1);
 
   const name1 = driver1?.Driver?.familyName || 'Driver 1';
   const name2 = driver2?.Driver?.familyName || 'Driver 2';
@@ -214,23 +221,28 @@ export default function DriverComparison() {
     return r;
   }, [results, driver1Id, driver2Id]);
 
-  // 1) Points accumulation over the season
+  // 1) Points accumulation over the season (Grand Prix + Sprint points, so the
+  // final value matches the official standings)
   const pointsAccum = useMemo(() => {
     if (!results || !driver1Id || !driver2Id) return [];
+    const sprintByRound = {};
+    (sprints || []).forEach(s => { sprintByRound[s.round] = s.SprintResults || []; });
+    const sprintPoints = (round, id) =>
+      parseFloat(sprintByRound[round]?.find(r => r.Driver?.driverId === id)?.points || 0);
     let cum1 = 0, cum2 = 0;
     return results.map((race) => {
       const r1 = race.Results?.find(r => r.Driver?.driverId === driver1Id);
       const r2 = race.Results?.find(r => r.Driver?.driverId === driver2Id);
-      cum1 += parseFloat(r1?.points || 0);
-      cum2 += parseFloat(r2?.points || 0);
+      cum1 += parseFloat(r1?.points || 0) + sprintPoints(race.round, driver1Id);
+      cum2 += parseFloat(r2?.points || 0) + sprintPoints(race.round, driver2Id);
       return {
-        race: race.raceName?.replace(' Grand Prix', '').substring(0, 10),
+        race: shortRaceName(race.raceName),
         round: parseInt(race.round),
         [name1]: cum1,
         [name2]: cum2,
       };
     });
-  }, [results, driver1Id, driver2Id, name1, name2]);
+  }, [results, sprints, driver1Id, driver2Id, name1, name2]);
 
   // 2) H2H position delta per race (positive = driver2 beat driver1)
   const deltaData = useMemo(() => {
@@ -244,68 +256,38 @@ export default function DriverComparison() {
       // Positive delta means driver1 finished higher (better)
       const delta = p2 - p1;
       return {
-        race: race.raceName?.replace(' Grand Prix', '').substring(0, 10),
+        race: shortRaceName(race.raceName),
         delta,
         winner: delta > 0 ? 1 : delta < 0 ? 2 : 0,
       };
     }).filter(Boolean);
   }, [results, driver1Id, driver2Id]);
 
-  // 3) Qualifying vs Race (average positions)
-  const qualiVsRace = useMemo(() => {
-    if (!results || !qualifyingRaces || !driver1Id || !driver2Id) return null;
-    const stats = { d1: { qualiSum: 0, raceSum: 0, count: 0, qualiPositions: [], racePositions: [] },
-                    d2: { qualiSum: 0, raceSum: 0, count: 0, qualiPositions: [], racePositions: [] } };
-
-    results.forEach((race) => {
-      const quali = qualifyingRaces.find(q => q.round === race.round);
-      if (!quali) return;
-
-      const rr1 = race.Results?.find(r => r.Driver?.driverId === driver1Id);
-      const rr2 = race.Results?.find(r => r.Driver?.driverId === driver2Id);
-      const qr1 = quali.QualifyingResults?.find(q => q.Driver?.driverId === driver1Id);
-      const qr2 = quali.QualifyingResults?.find(q => q.Driver?.driverId === driver2Id);
-
-      if (rr1 && qr1) {
-        const qp = parseInt(qr1.position);
-        const rp = parseInt(rr1.position);
-        stats.d1.qualiSum += qp;
-        stats.d1.raceSum += rp;
-        stats.d1.count++;
-        stats.d1.qualiPositions.push(qp);
-        stats.d1.racePositions.push(rp);
-      }
-      if (rr2 && qr2) {
-        const qp = parseInt(qr2.position);
-        const rp = parseInt(rr2.position);
-        stats.d2.qualiSum += qp;
-        stats.d2.raceSum += rp;
-        stats.d2.count++;
-        stats.d2.qualiPositions.push(qp);
-        stats.d2.racePositions.push(rp);
-      }
-    });
-
-    if (stats.d1.count === 0 && stats.d2.count === 0) return null;
-
-    const avgQuali1 = stats.d1.count ? (stats.d1.qualiSum / stats.d1.count) : null;
-    const avgRace1 = stats.d1.count ? (stats.d1.raceSum / stats.d1.count) : null;
-    const avgQuali2 = stats.d2.count ? (stats.d2.qualiSum / stats.d2.count) : null;
-    const avgRace2 = stats.d2.count ? (stats.d2.raceSum / stats.d2.count) : null;
-
-    // Per-race gains (positive = gained places, negative = lost places)
-    const gains1 = stats.d1.qualiPositions.map((q, i) => q - stats.d1.racePositions[i]);
-    const gains2 = stats.d2.qualiPositions.map((q, i) => q - stats.d2.racePositions[i]);
-    const avgGain1 = gains1.length ? (gains1.reduce((a, b) => a + b, 0) / gains1.length) : 0;
-    const avgGain2 = gains2.length ? (gains2.reduce((a, b) => a + b, 0) / gains2.length) : 0;
-
-    return {
-      chartData: [
-        { name: name1, avgQuali: avgQuali1 ? +avgQuali1.toFixed(1) : 0, avgRace: avgRace1 ? +avgRace1.toFixed(1) : 0, avgGain: +avgGain1.toFixed(2), color: color1 },
-        { name: name2, avgQuali: avgQuali2 ? +avgQuali2.toFixed(1) : 0, avgRace: avgRace2 ? +avgRace2.toFixed(1) : 0, avgGain: +avgGain2.toFixed(2), color: color2 },
-      ],
+  // 3) Grid vs finish. Uses the actual starting grid (after penalties), and
+  // only races where the driver started from the grid and was classified, so
+  // a DNF doesn't masquerade as "positions lost".
+  const gridVsFinish = useMemo(() => {
+    if (!results || !driver1Id || !driver2Id) return null;
+    const summarise = (id) => {
+      const rows = results
+        .map(race => race.Results?.find(r => r.Driver?.driverId === id))
+        .filter(r => r && isClassified(r) && parseInt(r.grid, 10) > 0);
+      if (!rows.length) return null;
+      const avg = (f) => rows.reduce((a, r) => a + f(r), 0) / rows.length;
+      return {
+        count: rows.length,
+        avgGrid: +avg(r => parseInt(r.grid, 10)).toFixed(1),
+        avgFinish: +avg(r => parseInt(r.position, 10)).toFixed(1),
+      };
     };
-  }, [results, qualifyingRaces, driver1Id, driver2Id, name1, name2, color1, color2]);
+    const s1 = summarise(driver1Id);
+    const s2 = summarise(driver2Id);
+    if (!s1 && !s2) return null;
+    return [
+      s1 && { name: name1, color: color1, ...s1 },
+      s2 && { name: name2, color: color2, ...s2 },
+    ].filter(Boolean);
+  }, [results, driver1Id, driver2Id, name1, name2, color1, color2]);
 
   return (
     <div>
@@ -327,8 +309,8 @@ export default function DriverComparison() {
             <Loader size={16} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, alignItems: 'end' }}>
-            <DriverSelector drivers={standings || []} selected={driver1Id} onSelect={setDriver1Id} label="DRIVER 1" color={color1} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 24, alignItems: 'end' }}>
+            <DriverSelector drivers={standings || []} selected={driver1Id} onSelect={setDriver1Id} label="DRIVER 1" color={color1} exclude={driver2Id} />
             <div style={{
               width: 50, height: 50, borderRadius: '50%',
               background: 'var(--accent-soft)', border: '2px solid var(--accent-border)',
@@ -337,14 +319,14 @@ export default function DriverComparison() {
             }}>
               VS
             </div>
-            <DriverSelector drivers={standings || []} selected={driver2Id} onSelect={setDriver2Id} label="DRIVER 2" color={color2} />
+            <DriverSelector drivers={standings || []} selected={driver2Id} onSelect={setDriver2Id} label="DRIVER 2" color={color2} exclude={driver1Id} />
           </div>
         )}
       </Card>
 
       {/* Comparison Content */}
       {driver1 && driver2 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
 
           {/* ── Stats Card ─────────────────────────────────────────────────── */}
           <Card>
@@ -354,14 +336,14 @@ export default function DriverComparison() {
                   <span style={{ marginRight: 6 }}>{getFlag(driver1.Driver.nationality)}</span>
                   {driver1.Driver.givenName} {driver1.Driver.familyName}
                 </div>
-                <div style={{ marginTop: 4 }}><TeamBadge team={driver1.Constructors?.[0]?.name} size="md" /></div>
+                <div style={{ marginTop: 4 }}><TeamBadge team={currentConstructor(driver1)?.name} size="md" /></div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 20, fontWeight: 800, color: color2 }}>
                   {driver2.Driver.givenName} {driver2.Driver.familyName}
                   <span style={{ marginLeft: 6 }}>{getFlag(driver2.Driver.nationality)}</span>
                 </div>
-                <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end' }}><TeamBadge team={driver2.Constructors?.[0]?.name} size="md" /></div>
+                <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end' }}><TeamBadge team={currentConstructor(driver2)?.name} size="md" /></div>
               </div>
             </div>
 
@@ -433,13 +415,13 @@ export default function DriverComparison() {
           </Card>
 
           {/* ── Qualifying vs Race ─────────────────────────────────────────── */}
-          {qualiVsRace && (
+          {gridVsFinish && (
             <Card style={{ gridColumn: '1 / -1' }}>
-              <ChartTitle title="Qualifying vs Race Performance" subtitle="Average grid position vs average finishing position — who gains on Sunday?" />
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
-                {qualiVsRace.chartData.map((d) => {
-                  const gained = d.avgRace < d.avgQuali;
-                  const delta = (d.avgQuali - d.avgRace).toFixed(1);
+              <ChartTitle title="Grid vs Finish" subtitle="Average starting grid slot vs average finishing position in classified races. Who gains on Sunday?" />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 24 }}>
+                {gridVsFinish.map((d) => {
+                  const gained = d.avgFinish < d.avgGrid;
+                  const delta = (d.avgGrid - d.avgFinish).toFixed(1);
                   return (
                     <div key={d.name} style={{
                       padding: 16, borderRadius: 10,
@@ -448,14 +430,15 @@ export default function DriverComparison() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: d.color }} />
                         <span style={{ fontSize: 14, fontWeight: 700, color: d.color }}>{d.name}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{d.count} classified races</span>
                       </div>
 
                       {/* Avg positions */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                         <div>
-                          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Avg Qualifying</div>
+                          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Avg Grid</div>
                           <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
-                            P{d.avgQuali}
+                            P{d.avgGrid}
                           </div>
                         </div>
                         <div style={{
@@ -467,7 +450,7 @@ export default function DriverComparison() {
                         <div style={{ textAlign: 'right' }}>
                           <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Avg Finish</div>
                           <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
-                            P{d.avgRace}
+                            P{d.avgFinish}
                           </div>
                         </div>
                       </div>

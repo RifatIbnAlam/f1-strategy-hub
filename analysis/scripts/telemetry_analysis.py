@@ -18,6 +18,8 @@ from matplotlib.collections import LineCollection
 import os
 
 # Setup
+# FastF1 raises if the cache directory does not exist yet
+os.makedirs('./cache', exist_ok=True)
 fastf1.Cache.enable_cache('./cache')
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['figure.facecolor'] = '#0a0a12'
@@ -50,7 +52,7 @@ def plot_speed_comparison(session, driver_codes, output_name='speed_comparison.p
 
     for i, driver in enumerate(driver_codes):
         try:
-            laps = session.laps.pick_driver(driver)
+            laps = session.laps.pick_drivers(driver)
             fastest = laps.pick_fastest()
             car_data = fastest.get_car_data().add_distance()
             color = colors[i % len(colors)]
@@ -105,7 +107,7 @@ def plot_track_speed_heatmap(session, driver_code, output_name='track_speed.png'
     Visualize speed on the track layout using a color gradient.
     Creates a stunning track map with speed data overlaid.
     """
-    laps = session.laps.pick_driver(driver_code)
+    laps = session.laps.pick_drivers(driver_code)
     fastest = laps.pick_fastest()
     pos = fastest.get_pos_data()
     car = fastest.get_car_data()
@@ -160,7 +162,7 @@ def plot_lap_time_distribution(session, driver_codes, output_name='lap_distribut
 
     for i, driver in enumerate(driver_codes):
         try:
-            laps = session.laps.pick_driver(driver).pick_quicklaps()
+            laps = session.laps.pick_drivers(driver).pick_quicklaps()
             times = laps['LapTime'].dt.total_seconds()
             data.append(times.values)
             labels.append(driver)
@@ -205,7 +207,7 @@ def plot_tire_strategy_timeline(session, output_name='tire_strategy.png'):
     fig, ax = plt.subplots(figsize=(16, max(8, len(drivers) * 0.5)))
 
     for i, driver in enumerate(sorted(drivers)):
-        driver_laps = laps.pick_driver(driver)
+        driver_laps = laps.pick_drivers(driver)
         stints = driver_laps[['Stint', 'Compound', 'LapNumber']].groupby('Stint')
 
         for stint_num, stint_data in stints:

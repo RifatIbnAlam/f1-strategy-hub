@@ -1,98 +1,19 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useDeferredValue } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, Area, AreaChart
+  ResponsiveContainer, ReferenceLine, Area, AreaChart, Legend,
 } from 'recharts';
-import { Timer, Plus, Trash2, Settings, Zap, AlertTriangle } from 'lucide-react';
-import { TIRE_COMPOUNDS } from '../data/constants';
+import { Timer, Plus, Trash2, Settings, Zap, AlertTriangle, Cpu, Wand2 } from 'lucide-react';
+import { TIRE_COMPOUNDS, DRY_COMPOUNDS } from '../data/constants';
+import {
+  CIRCUIT_PRESETS,
+  DEFAULT_MODEL_OPTIONS,
+  compoundCliffLap,
+  simulateStrategy,
+  findOptimalStrategies,
+  formatRaceTime,
+} from '../models/strategy';
 import RealTireData from './RealTireData';
-
-/* ─── Tire Physics Model ──────────────────────────────────────────────────── */
-function simulateLapTime({
-  baseLapTime,      // seconds
-  fuelLoad,         // kg, decreases each lap
-  fuelEffect,       // seconds per kg
-  compound,         // SOFT, MEDIUM, HARD
-  tireAge,          // laps on this tire set
-  trackEvolution,   // improvement per lap (negative)
-  tireDegModel,     // 'linear' | 'cliff'
-  cliffLap,         // lap at which cliff occurs
-}) {
-  const tire = TIRE_COMPOUNDS[compound];
-  const gripBonus = compound === 'SOFT' ? -0.4 : compound === 'MEDIUM' ? -0.15 : 0;
-
-  // Tire degradation — linear or cliff model
-  let tireDeg;
-  if (tireDegModel === 'cliff' && tireAge >= cliffLap) {
-    tireDeg = tire.degradation * tireAge + (tireAge - cliffLap) * 0.15;
-  } else {
-    tireDeg = tire.degradation * tireAge;
-  }
-
-  // Fuel effect
-  const fuelTime = fuelLoad * fuelEffect;
-
-  // Track evolution (rubber builds up, track gets faster)
-  const trackBonus = trackEvolution * tireAge * 0.3;
-
-  return baseLapTime + gripBonus + tireDeg + fuelTime + trackBonus;
-}
-
-/* ─── Default Circuit Configs ─────────────────────────────────────────────── */
-// All 24 rounds of the 2025 F1 World Championship calendar
-// baseLap: representative qualifying/race lap in seconds (recent season avg)
-// pitLoss: total time lost per pit stop (in-lap + out-lap delta vs flying lap)
-// fuelEffect: lap time penalty per kg of fuel (s/kg)
-const CIRCUIT_PRESETS = {
-  // ── Round 1 ──────────────────────────────────────────────────────────────
-  bahrain:     { name: 'Bahrain — Sakhir',           baseLap:  90.5, totalLaps: 57, pitLoss: 22, fuelEffect: 0.036 },
-  // ── Round 2 ──────────────────────────────────────────────────────────────
-  jeddah:      { name: 'Saudi Arabia — Jeddah',       baseLap:  90.1, totalLaps: 50, pitLoss: 24, fuelEffect: 0.033 },
-  // ── Round 3 ──────────────────────────────────────────────────────────────
-  albert_park: { name: 'Australia — Albert Park',     baseLap:  80.2, totalLaps: 58, pitLoss: 24, fuelEffect: 0.034 },
-  // ── Round 4 ──────────────────────────────────────────────────────────────
-  suzuka:      { name: 'Japan — Suzuka',              baseLap:  91.0, totalLaps: 53, pitLoss: 23, fuelEffect: 0.037 },
-  // ── Round 5 ──────────────────────────────────────────────────────────────
-  shanghai:    { name: 'China — Shanghai',            baseLap:  96.5, totalLaps: 56, pitLoss: 25, fuelEffect: 0.036 },
-  // ── Round 6 ──────────────────────────────────────────────────────────────
-  miami:       { name: 'USA — Miami',                 baseLap:  89.2, totalLaps: 57, pitLoss: 22, fuelEffect: 0.035 },
-  // ── Round 7 ──────────────────────────────────────────────────────────────
-  imola:       { name: 'Emilia Romagna — Imola',      baseLap:  77.1, totalLaps: 63, pitLoss: 26, fuelEffect: 0.034 },
-  // ── Round 8 ──────────────────────────────────────────────────────────────
-  monaco:      { name: 'Monaco — Monte Carlo',        baseLap:  72.5, totalLaps: 78, pitLoss: 20, fuelEffect: 0.030 },
-  // ── Round 9 ──────────────────────────────────────────────────────────────
-  montreal:    { name: 'Canada — Montréal',           baseLap:  74.0, totalLaps: 70, pitLoss: 23, fuelEffect: 0.033 },
-  // ── Round 10 ─────────────────────────────────────────────────────────────
-  barcelona:   { name: 'Spain — Barcelona',           baseLap:  82.4, totalLaps: 66, pitLoss: 21, fuelEffect: 0.037 },
-  // ── Round 11 ─────────────────────────────────────────────────────────────
-  red_bull_ring:{ name: 'Austria — Red Bull Ring',    baseLap:  64.8, totalLaps: 71, pitLoss: 23, fuelEffect: 0.032 },
-  // ── Round 12 ─────────────────────────────────────────────────────────────
-  silverstone: { name: 'Britain — Silverstone',       baseLap:  87.0, totalLaps: 52, pitLoss: 22, fuelEffect: 0.038 },
-  // ── Round 13 ─────────────────────────────────────────────────────────────
-  hungaroring: { name: 'Hungary — Hungaroring',       baseLap:  78.6, totalLaps: 70, pitLoss: 20, fuelEffect: 0.034 },
-  // ── Round 14 ─────────────────────────────────────────────────────────────
-  spa:         { name: 'Belgium — Spa-Francorchamps', baseLap: 106.0, totalLaps: 44, pitLoss: 23, fuelEffect: 0.040 },
-  // ── Round 15 ─────────────────────────────────────────────────────────────
-  zandvoort:   { name: 'Netherlands — Zandvoort',     baseLap:  74.0, totalLaps: 72, pitLoss: 23, fuelEffect: 0.033 },
-  // ── Round 16 ─────────────────────────────────────────────────────────────
-  monza:       { name: 'Italy — Monza',               baseLap:  81.0, totalLaps: 53, pitLoss: 24, fuelEffect: 0.035 },
-  // ── Round 17 ─────────────────────────────────────────────────────────────
-  baku:        { name: 'Azerbaijan — Baku',           baseLap: 103.0, totalLaps: 51, pitLoss: 18, fuelEffect: 0.033 },
-  // ── Round 18 ─────────────────────────────────────────────────────────────
-  singapore:   { name: 'Singapore — Marina Bay',      baseLap:  97.5, totalLaps: 62, pitLoss: 22, fuelEffect: 0.031 },
-  // ── Round 19 ─────────────────────────────────────────────────────────────
-  cota:        { name: 'USA — Circuit of the Americas', baseLap: 96.2, totalLaps: 56, pitLoss: 22, fuelEffect: 0.036 },
-  // ── Round 20 ─────────────────────────────────────────────────────────────
-  mexico_city: { name: 'Mexico — Autodromo Hermanos Rodríguez', baseLap: 79.4, totalLaps: 71, pitLoss: 23, fuelEffect: 0.030 },
-  // ── Round 21 ─────────────────────────────────────────────────────────────
-  interlagos:  { name: 'Brazil — Interlagos',         baseLap:  73.1, totalLaps: 71, pitLoss: 24, fuelEffect: 0.034 },
-  // ── Round 22 ─────────────────────────────────────────────────────────────
-  las_vegas:   { name: 'USA — Las Vegas Strip',       baseLap:  97.8, totalLaps: 50, pitLoss: 20, fuelEffect: 0.034 },
-  // ── Round 23 ─────────────────────────────────────────────────────────────
-  lusail:      { name: 'Qatar — Lusail',              baseLap:  83.0, totalLaps: 57, pitLoss: 22, fuelEffect: 0.036 },
-  // ── Round 24 ─────────────────────────────────────────────────────────────
-  yas_marina:  { name: 'Abu Dhabi — Yas Marina',      baseLap:  85.3, totalLaps: 58, pitLoss: 25, fuelEffect: 0.035 },
-};
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -103,6 +24,26 @@ const Card = ({ children, style }) => (
     padding: 24,
     ...style,
   }}>{children}</div>
+);
+
+const labelStyle = { fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' };
+const selectStyle = {
+  width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
+  color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
+};
+const tooltipStyle = { background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 };
+
+/* ─── Stint Bar ───────────────────────────────────────────────────────────── */
+const StintBar = ({ stints, height = 8 }) => (
+  <div style={{ display: 'flex', height, borderRadius: 4, overflow: 'hidden', gap: 2 }}>
+    {stints.map((s, i) => (
+      <div key={i} title={`${TIRE_COMPOUNDS[s.compound].label} · ${s.laps} laps`} style={{
+        flex: s.laps,
+        background: TIRE_COMPOUNDS[s.compound].color,
+        opacity: 0.85,
+      }} />
+    ))}
+  </div>
 );
 
 /* ─── Stint Editor ────────────────────────────────────────────────────────── */
@@ -123,27 +64,28 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
     <select
       value={stint.compound}
       onChange={e => onUpdate(index, 'compound', e.target.value)}
+      aria-label={`Stint ${index + 1} compound`}
       style={{
         background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
-        color: TIRE_COMPOUNDS[stint.compound].color,
+        color: 'var(--text-primary)',
         padding: '6px 10px', fontSize: 12, fontWeight: 600,
         fontFamily: "'JetBrains Mono', monospace",
         cursor: 'pointer',
       }}
     >
-      {Object.keys(TIRE_COMPOUNDS).filter(k => !['INTERMEDIATE', 'WET'].includes(k)).map(c => (
+      {DRY_COMPOUNDS.map(c => (
         <option key={c} value={c}>{TIRE_COMPOUNDS[c].label}</option>
       ))}
     </select>
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Laps:</span>
       <input
         type="range"
         min={1}
         max={maxLaps}
         value={stint.laps}
-        onChange={e => onUpdate(index, 'laps', parseInt(e.target.value))}
-        style={{ flex: 1, accentColor: TIRE_COMPOUNDS[stint.compound].color }}
+        aria-label={`Stint ${index + 1} laps`}
+        onChange={e => onUpdate(index, 'laps', parseInt(e.target.value, 10))}
+        style={{ flex: 1, minWidth: 0, accentColor: TIRE_COMPOUNDS[stint.compound].color }}
       />
       <span style={{
         fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', width: 30, textAlign: 'right',
@@ -153,7 +95,7 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
       </span>
     </div>
     {index > 0 && (
-      <button onClick={() => onRemove(index)} style={{
+      <button onClick={() => onRemove(index)} aria-label={`Remove stint ${index + 1}`} style={{
         background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)', padding: 4,
       }}>
         <Trash2 size={14} />
@@ -162,24 +104,25 @@ const StintEditor = ({ stint, index, onUpdate, onRemove, maxLaps }) => (
   </div>
 );
 
+const STRATEGY_COLORS = ['#e10600', '#3671C6'];
+
 /* ─── Strategy Simulator ──────────────────────────────────────────────────── */
 export default function StrategySimulator() {
-  const [circuit, setCircuit] = useState('monza');
-  const [tireDegModel, setTireDegModel] = useState('cliff');
-  const [cliffLap, setCliffLap] = useState(18);
-  const [trackEvolution, setTrackEvolution] = useState(-0.01);
+  const [circuitKey, setCircuitKey] = useState('monza');
+  const [degModel, setDegModel] = useState(DEFAULT_MODEL_OPTIONS.degModel);
+  const [cliffLap, setCliffLap] = useState(DEFAULT_MODEL_OPTIONS.cliffLap);
+  const [trackEvolution, setTrackEvolution] = useState(DEFAULT_MODEL_OPTIONS.trackEvolution);
+  const [startFuel, setStartFuel] = useState(DEFAULT_MODEL_OPTIONS.startFuel);
   const [strategies, setStrategies] = useState([
     {
       name: 'Strategy A',
-      color: '#e10600',
       stints: [
-        { compound: 'MEDIUM', laps: 25 },
-        { compound: 'HARD', laps: 28 },
+        { compound: 'MEDIUM', laps: 24 },
+        { compound: 'HARD', laps: 29 },
       ],
     },
     {
       name: 'Strategy B',
-      color: '#3671C6',
       stints: [
         { compound: 'SOFT', laps: 15 },
         { compound: 'HARD', laps: 20 },
@@ -188,140 +131,112 @@ export default function StrategySimulator() {
     },
   ]);
 
-  const config = CIRCUIT_PRESETS[circuit];
-  const startFuel = config.totalLaps * 1.75; // ~1.75 kg per lap
+  const circuit = CIRCUIT_PRESETS[circuitKey];
+  const options = useMemo(
+    () => ({ degModel, cliffLap, trackEvolution, startFuel }),
+    [degModel, cliffLap, trackEvolution, startFuel]
+  );
 
-  // Calculate strategy simulation data
-  const simData = useMemo(() => {
-    return strategies.map(strategy => {
-      const laps = [];
-      let totalTime = 0;
-      let currentLap = 0;
-      let pitStops = 0;
+  const simData = useMemo(
+    () => strategies.map((s, i) => ({ ...s, color: STRATEGY_COLORS[i], ...simulateStrategy(s.stints, circuit, options) })),
+    [strategies, circuit, options]
+  );
 
-      strategy.stints.forEach((stint, stintIdx) => {
-        // Add pit stop time (except first stint)
-        if (stintIdx > 0) {
-          totalTime += config.pitLoss;
-          pitStops++;
-        }
+  // The optimiser evaluates ~30k strategies; defer it so sliders stay smooth.
+  const deferredCircuit = useDeferredValue(circuit);
+  const deferredOptions = useDeferredValue(options);
+  const optimal = useMemo(
+    () => findOptimalStrategies(deferredCircuit, deferredOptions),
+    [deferredCircuit, deferredOptions]
+  );
 
-        for (let i = 0; i < stint.laps && currentLap < config.totalLaps; i++) {
-          currentLap++;
-          const fuelRemaining = startFuel - (currentLap * 1.75);
-          const lapTime = simulateLapTime({
-            baseLapTime: config.baseLap,
-            fuelLoad: Math.max(fuelRemaining, 0),
-            fuelEffect: config.fuelEffect,
-            compound: stint.compound,
-            tireAge: i,
-            trackEvolution,
-            tireDegModel,
-            cliffLap,
-          });
-          totalTime += lapTime;
-          laps.push({
-            lap: currentLap,
-            lapTime: parseFloat(lapTime.toFixed(3)),
-            totalTime: parseFloat(totalTime.toFixed(3)),
-            compound: stint.compound,
-            tireAge: i + 1,
-            stint: stintIdx + 1,
-          });
-        }
-      });
-
-      return {
-        ...strategy,
-        laps,
-        totalTime,
-        pitStops,
-        totalLaps: currentLap,
-      };
-    });
-  }, [strategies, tireDegModel, cliffLap, trackEvolution, config, startFuel]);
-
-  // Build chart data
   const chartData = useMemo(() => {
     const maxLaps = Math.max(...simData.map(s => s.laps.length));
     return Array.from({ length: maxLaps }, (_, i) => {
       const point = { lap: i + 1 };
       simData.forEach((s, si) => {
-        if (s.laps[i]) {
-          point[`lapTime_${si}`] = s.laps[i].lapTime;
-          point[`total_${si}`] = s.laps[i].totalTime;
-          point[`compound_${si}`] = s.laps[i].compound;
-        }
+        const lap = s.laps[i];
+        if (!lap) return;
+        // Pit in-laps include the pit-lane loss; plot racing pace only.
+        point[`lapTime_${si}`] = lap.pit ? null : +lap.lapTime.toFixed(3);
+        point[`total_${si}`] = lap.totalTime;
       });
+      if (point.total_0 != null && point.total_1 != null) {
+        point.gap = +(point.total_1 - point.total_0).toFixed(3);
+      }
       return point;
     });
   }, [simData]);
 
-  // Gap analysis
-  const gapData = useMemo(() => {
-    if (simData.length < 2) return [];
-    return chartData.map(p => ({
-      lap: p.lap,
-      gap: p.total_1 && p.total_0 ? parseFloat((p.total_1 - p.total_0).toFixed(3)) : null,
-    }));
-  }, [chartData, simData]);
-
   const updateStint = useCallback((stratIdx, stintIdx, field, value) => {
-    setStrategies(prev => {
-      const updated = [...prev];
-      updated[stratIdx] = {
-        ...updated[stratIdx],
-        stints: updated[stratIdx].stints.map((s, i) =>
-          i === stintIdx ? { ...s, [field]: value } : s
-        ),
-      };
-      return updated;
-    });
+    setStrategies(prev => prev.map((strat, i) => i !== stratIdx ? strat : {
+      ...strat,
+      stints: strat.stints.map((s, j) => j === stintIdx ? { ...s, [field]: value } : s),
+    }));
   }, []);
 
   const addStint = useCallback((stratIdx) => {
-    setStrategies(prev => {
-      const updated = [...prev];
-      updated[stratIdx] = {
-        ...updated[stratIdx],
-        stints: [...updated[stratIdx].stints, { compound: 'HARD', laps: 10 }],
-      };
-      return updated;
-    });
+    setStrategies(prev => prev.map((strat, i) => i !== stratIdx ? strat : {
+      ...strat,
+      stints: [...strat.stints, { compound: 'HARD', laps: 10 }],
+    }));
   }, []);
 
   const removeStint = useCallback((stratIdx, stintIdx) => {
-    setStrategies(prev => {
-      const updated = [...prev];
-      updated[stratIdx] = {
-        ...updated[stratIdx],
-        stints: updated[stratIdx].stints.filter((_, i) => i !== stintIdx),
-      };
-      return updated;
-    });
+    setStrategies(prev => prev.map((strat, i) => i !== stratIdx ? strat : {
+      ...strat,
+      stints: strat.stints.filter((_, j) => j !== stintIdx),
+    }));
   }, []);
 
-  // Calculate who's winning
-  const winner = simData.length >= 2
-    ? (simData[0].totalTime <= simData[1].totalTime ? 0 : 1)
-    : 0;
-  const timeDiff = simData.length >= 2
-    ? Math.abs(simData[0].totalTime - simData[1].totalTime).toFixed(3)
-    : 0;
+  // Stretch or shrink the final stint so the plan covers the race distance.
+  const fitToDistance = useCallback((stratIdx) => {
+    setStrategies(prev => prev.map((strat, i) => {
+      if (i !== stratIdx) return strat;
+      const others = strat.stints.slice(0, -1).reduce((a, s) => a + s.laps, 0);
+      const last = strat.stints[strat.stints.length - 1];
+      return {
+        ...strat,
+        stints: [...strat.stints.slice(0, -1), { ...last, laps: Math.max(1, circuit.totalLaps - others) }],
+      };
+    }));
+  }, [circuit.totalLaps]);
+
+  const loadStrategy = useCallback((stratIdx, stints) => {
+    setStrategies(prev => prev.map((strat, i) => i !== stratIdx ? strat : { ...strat, stints: stints.map(s => ({ ...s })) }));
+  }, []);
+
+  // When switching circuit, rescale every plan to the new race distance.
+  const changeCircuit = (key) => {
+    const next = CIRCUIT_PRESETS[key];
+    setStrategies(prev => prev.map(strat => {
+      const total = strat.stints.reduce((a, s) => a + s.laps, 0) || 1;
+      const scaled = strat.stints.map(s => ({ ...s, laps: Math.max(1, Math.round(s.laps * next.totalLaps / total)) }));
+      const drift = next.totalLaps - scaled.reduce((a, s) => a + s.laps, 0);
+      scaled[scaled.length - 1].laps = Math.max(1, scaled[scaled.length - 1].laps + drift);
+      return { ...strat, stints: scaled };
+    }));
+    setCircuitKey(key);
+  };
+
+  const bothValid = simData.every(s => s.valid);
+  const winner = simData[0].totalTime <= simData[1].totalTime ? 0 : 1;
+  const timeDiff = Math.abs(simData[0].totalTime - simData[1].totalTime).toFixed(3);
+  const bestTime = optimal[0]?.totalTime;
 
   return (
     <div>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{
-        fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px',
+          fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-1px',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
           <Timer size={28} color="var(--accent)" />
           Race Strategy Simulator
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-          Model tire degradation, pit windows, and race pace to find the optimal strategy
+          Model tyre degradation, fuel burn, and pit loss lap by lap, then search every legal 1- and 2-stop plan for the fastest race
         </p>
       </div>
 
@@ -331,147 +246,209 @@ export default function StrategySimulator() {
           <Settings size={16} color="var(--accent)" />
           <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Simulation Parameters</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 16 }}>
           <div>
-            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>CIRCUIT</label>
-            <select value={circuit} onChange={e => setCircuit(e.target.value)} style={{
-              width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
-              color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13, fontFamily: "'JetBrains Mono', monospace",
-            }}>
+            <label style={labelStyle}>CIRCUIT</label>
+            <select value={circuitKey} onChange={e => changeCircuit(e.target.value)} style={{ ...selectStyle, fontFamily: "'JetBrains Mono', monospace" }}>
               {Object.entries(CIRCUIT_PRESETS).map(([k, v]) => (
                 <option key={k} value={k}>{v.name} ({v.totalLaps} laps)</option>
               ))}
             </select>
+            <div style={{ fontSize: 10, color: 'var(--text-soft)', marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+              pit loss {circuit.pitLoss}s · fuel {circuit.fuelEffect}s/kg
+            </div>
           </div>
           <div>
-            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>TIRE MODEL</label>
-            <select value={tireDegModel} onChange={e => setTireDegModel(e.target.value)} style={{
-              width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6,
-              color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
-            }}>
+            <label style={labelStyle}>TYRE MODEL</label>
+            <select value={degModel} onChange={e => setDegModel(e.target.value)} style={selectStyle}>
               <option value="linear">Linear Degradation</option>
-              <option value="cliff">Cliff Degradation</option>
+              <option value="cliff">Linear + Performance Cliff</option>
             </select>
           </div>
-          {tireDegModel === 'cliff' && (
+          {degModel === 'cliff' && (
             <div>
-              <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>
-                CLIFF LAP: {cliffLap}
+              <label style={labelStyle}>
+                CLIFF (TYRE AGE): S{compoundCliffLap('SOFT', cliffLap)} · M{cliffLap} · H{compoundCliffLap('HARD', cliffLap)}
               </label>
-              <input type="range" min={8} max={35} value={cliffLap}
-                onChange={e => setCliffLap(parseInt(e.target.value))}
+              <input type="range" min={10} max={40} value={cliffLap}
+                onChange={e => setCliffLap(parseInt(e.target.value, 10))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }}
               />
             </div>
           )}
           <div>
-            <label style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, display: 'block' }}>
+            <label style={labelStyle}>
               TRACK EVOLUTION: {trackEvolution.toFixed(3)}s/lap
             </label>
-            <input type="range" min={-30} max={0} value={trackEvolution * 1000}
+            <input type="range" min={-30} max={0} value={Math.round(trackEvolution * 1000)}
               onChange={e => setTrackEvolution(e.target.value / 1000)}
               style={{ width: '100%', accentColor: '#27F4D2' }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>
+              START FUEL: {startFuel} kg
+            </label>
+            <input type="range" min={60} max={110} value={startFuel}
+              onChange={e => setStartFuel(parseInt(e.target.value, 10))}
+              style={{ width: '100%', accentColor: '#FF8000' }}
             />
           </div>
         </div>
       </Card>
 
-      {/* Strategy Builders */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
-        {strategies.map((strat, si) => {
-          const totalStintLaps = strat.stints.reduce((a, s) => a + s.laps, 0);
-          const lapsOff = totalStintLaps !== config.totalLaps;
-          return (
-            <Card key={si} style={{ borderTop: `3px solid ${strat.color}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: strat.color }}>{strat.name}</span>
-                  <span style={{
-                    fontSize: 11, color: 'var(--text-muted)', marginLeft: 8,
-                    fontFamily: "'JetBrains Mono', monospace",
-                  }}>
-                    {strat.stints.length - 1} stop{strat.stints.length > 2 ? 's' : ''}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {lapsOff && (
-                    <span style={{ fontSize: 11, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <AlertTriangle size={12} />
-                      {totalStintLaps}/{config.totalLaps} laps
-                    </span>
-                  )}
+      {/* Optimal Strategies */}
+      <Card style={{ marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <Cpu size={16} color="var(--accent)" />
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Optimal Strategies</span>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+          Exhaustive search over every 1- and 2-stop plan (minimum 5-lap stints, two-compound rule enforced), with memoised stint costs
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {optimal.map((r, i) => (
+            <div key={i} style={{
+              display: 'grid', gridTemplateColumns: '24px minmax(120px, 1fr) auto', alignItems: 'center', gap: 12,
+              padding: '10px 12px', borderRadius: 8, background: 'var(--app-bg-alt)',
+            }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? '#D4A800' : 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                {i + 1}
+              </span>
+              <div>
+                <StintBar stints={r.stints} height={10} />
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6, fontFamily: "'JetBrains Mono', monospace" }}>
+                  {r.stints.map(s => `${TIRE_COMPOUNDS[s.compound].label[0]}${s.laps}`).join(' → ')}
+                  <span style={{ color: 'var(--text-muted)' }}> · {r.pitStops} stop{r.pitStops !== 1 ? 's' : ''}</span>
+                  <span style={{ color: 'var(--text-muted)' }}> · {formatRaceTime(r.totalTime)}</span>
+                  {i > 0 && <span style={{ color: 'var(--accent)' }}> (+{(r.totalTime - bestTime).toFixed(1)}s)</span>}
                 </div>
               </div>
-
-              {/* Stint visual bar */}
-              <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', marginBottom: 16, gap: 2 }}>
-                {strat.stints.map((s, i) => (
-                  <div key={i} style={{
-                    flex: s.laps,
-                    background: TIRE_COMPOUNDS[s.compound].color,
-                    opacity: 0.8,
-                  }} />
-                ))}
-              </div>
-
-              {/* Stint editors */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {strat.stints.map((stint, i) => (
-                  <StintEditor
-                    key={i}
-                    stint={stint}
-                    index={i}
-                    onUpdate={(stintIdx, field, value) => updateStint(si, stintIdx, field, value)}
-                    onRemove={(stintIdx) => removeStint(si, stintIdx)}
-                    maxLaps={config.totalLaps}
-                  />
-                ))}
-                {strat.stints.length < 4 && (
-                  <button onClick={() => addStint(si)} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    padding: '8px 16px', background: 'var(--app-bg-alt)',
-                    border: '1px dashed var(--input-border)', borderRadius: 8,
-                    color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
-                    transition: 'all 0.2s ease',
+              <div style={{ display: 'flex', gap: 6 }}>
+                {strategies.map((s, si) => (
+                  <button key={si} onClick={() => loadStrategy(si, r.stints)} title={`Load into ${s.name}`} style={{
+                    padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                    background: 'transparent', color: STRATEGY_COLORS[si], border: `1px solid ${STRATEGY_COLORS[si]}66`,
                   }}>
-                    <Plus size={14} /> Add Pit Stop
+                    → {s.name.slice(-1)}
                   </button>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Results */}
-      {simData.length >= 2 && (
-        <Card style={{
-          marginBottom: 24,
-          background: `linear-gradient(135deg, ${simData[winner].color}10, var(--app-bg-alt))`,
-          borderLeft: `4px solid ${simData[winner].color}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Zap size={24} color={simData[winner].color} />
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
-                {simData[winner].name} wins by {timeDiff}s
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                Total race time: {Math.floor(simData[winner].totalTime / 60)}m {(simData[winner].totalTime % 60).toFixed(1)}s
-                &middot; {simData[winner].pitStops} pit stop{simData[winner].pitStops !== 1 ? 's' : ''}
+                ))}
               </div>
             </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Strategy Builders */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24, marginBottom: 24 }}>
+        {simData.map((strat, si) => (
+          <Card key={si} style={{ borderTop: `3px solid ${strat.color}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 8, flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ fontSize: 16, fontWeight: 700, color: strat.color }}>{strat.name}</span>
+                <span style={{
+                  fontSize: 11, color: 'var(--text-muted)', marginLeft: 8,
+                  fontFamily: "'JetBrains Mono', monospace",
+                }}>
+                  {strat.pitStops} stop{strat.pitStops !== 1 ? 's' : ''}
+                  {strat.valid && ` · ${formatRaceTime(strat.totalTime)}`}
+                </span>
+              </div>
+              {strat.stints.reduce((a, s) => a + s.laps, 0) !== circuit.totalLaps && (
+                <button onClick={() => fitToDistance(si)} style={{
+                  display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 6,
+                  background: 'var(--accent-soft)', border: '1px solid var(--accent-border)',
+                  color: 'var(--text-primary)', fontSize: 11, cursor: 'pointer',
+                }}>
+                  <Wand2 size={12} /> Fit to {circuit.totalLaps} laps
+                </button>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <StintBar stints={strat.stints} />
+            </div>
+
+            {strat.issues.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
+                {strat.issues.map(issue => (
+                  <span key={issue} style={{ fontSize: 11, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <AlertTriangle size={12} /> {issue}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {strat.stints.map((stint, i) => (
+                <StintEditor
+                  key={i}
+                  stint={stint}
+                  index={i}
+                  onUpdate={(stintIdx, field, value) => updateStint(si, stintIdx, field, value)}
+                  onRemove={(stintIdx) => removeStint(si, stintIdx)}
+                  maxLaps={circuit.totalLaps}
+                />
+              ))}
+              {strat.stints.length < 4 && (
+                <button onClick={() => addStint(si)} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '8px 16px', background: 'var(--app-bg-alt)',
+                  border: '1px dashed var(--input-border)', borderRadius: 8,
+                  color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer',
+                }}>
+                  <Plus size={14} /> Add Pit Stop
+                </button>
+              )}
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Result */}
+      <Card style={{
+        marginBottom: 24,
+        background: bothValid
+          ? `linear-gradient(135deg, ${simData[winner].color}10, var(--app-bg-alt))`
+          : 'var(--app-bg-alt)',
+        borderLeft: `4px solid ${bothValid ? simData[winner].color : 'var(--accent)'}`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {bothValid ? <Zap size={24} color={simData[winner].color} /> : <AlertTriangle size={24} color="var(--accent)" />}
+          <div>
+            {bothValid ? (
+              <>
+                <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {simData[winner].name} wins by {timeDiff}s
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                  Race time {formatRaceTime(simData[winner].totalTime)}
+                  {' '}&middot; {(simData[winner].totalTime - bestTime).toFixed(1)}s off the optimal strategy
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Fix the highlighted issues to compare strategies
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                  A plan that is short of the race distance or breaks the two-compound rule can't be compared fairly.
+                </div>
+              </>
+            )}
           </div>
-        </Card>
-      )}
+        </div>
+      </Card>
 
       {/* Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
-        {/* Lap Time Chart */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
         <Card>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
             Lap Time Comparison
           </h3>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+            Racing laps only; pit in-laps are omitted so the stop doesn't flatten the scale
+          </p>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
@@ -479,10 +456,11 @@ export default function StrategySimulator() {
               <YAxis stroke="var(--text-muted)" fontSize={11} domain={['auto', 'auto']}
                 tickFormatter={v => `${v.toFixed(1)}s`} />
               <Tooltip
-                contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
+                contentStyle={tooltipStyle}
                 labelFormatter={l => `Lap ${l}`}
-                formatter={(v, name) => [`${v.toFixed(3)}s`, name.includes('_0') ? strategies[0].name : strategies[1].name]}
+                formatter={(v, name) => [`${Number(v).toFixed(3)}s`, name]}
               />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
               {simData.map((s, i) => (
                 <Line
                   key={i}
@@ -492,26 +470,30 @@ export default function StrategySimulator() {
                   dot={false}
                   strokeWidth={2}
                   name={s.name}
+                  connectNulls={false}
+                  isAnimationActive={false}
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
         </Card>
 
-        {/* Gap Chart */}
         <Card>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
             Gap Between Strategies
           </h3>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+            Cumulative race time of B minus A. Above zero means A is ahead on the road.
+          </p>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={gapData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
               <XAxis dataKey="lap" stroke="var(--text-muted)" fontSize={11} />
-              <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(1)}s`} />
+              <YAxis stroke="var(--text-muted)" fontSize={11} tickFormatter={v => `${v > 0 ? '+' : ''}${v.toFixed(0)}s`} />
               <Tooltip
-                contentStyle={{ background: 'var(--tooltip-bg)', border: '1px solid var(--input-border)', borderRadius: 8, fontSize: 12 }}
+                contentStyle={tooltipStyle}
                 labelFormatter={l => `Lap ${l}`}
-                formatter={(v) => [`${v > 0 ? '+' : ''}${v.toFixed(3)}s`, 'B vs A Gap']}
+                formatter={(v) => [`${Math.abs(Number(v)).toFixed(3)}s`, v > 0 ? 'A ahead by' : 'B ahead by']}
               />
               <ReferenceLine y={0} stroke="var(--accent)" strokeDasharray="3 3" />
               <Area
@@ -520,6 +502,7 @@ export default function StrategySimulator() {
                 stroke="#3671C6"
                 fill="#3671C620"
                 strokeWidth={2}
+                isAnimationActive={false}
               />
             </AreaChart>
           </ResponsiveContainer>

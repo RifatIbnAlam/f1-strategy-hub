@@ -1,77 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { getFlag } from './data/flags';
-
-/* ─── Team / Constructor Color Map ────────────────────────────────────────── */
-const CHAMPION_TEAM_COLORS = {
-  // Driver team names
-  'Alfa Romeo': '#900000', 'Ferrari': '#E8002D', 'Maserati': '#8B0000',
-  'Maserati / Mercedes': '#8B0000', 'Mercedes': '#27F4D2',
-  'Cooper-Climax': '#006633', 'BRM': '#004225',
-  'Lotus-Climax': '#DAA520', 'Lotus-Ford': '#DAA520',
-  'Brabham-Repco': '#006847', 'Matra-Ford': '#002395',
-  'Tyrrell-Ford': '#003DA5', 'McLaren-Ford': '#FF8000',
-  'McLaren-TAG': '#FF8000', 'McLaren-Honda': '#FF8000',
-  'McLaren-Mercedes': '#FF8000', 'McLaren': '#FF8000',
-  'Williams-Ford': '#1868DB', 'Williams-Honda': '#1868DB',
-  'Williams-Renault': '#1868DB', 'Brabham-Ford': '#006847',
-  'Brabham-BMW': '#006847', 'Renault': '#FFD700',
-  'Benetton-Ford': '#00B140', 'Benetton-Renault': '#00B140',
-  'Red Bull-Renault': '#3671C6', 'Red Bull-Honda': '#3671C6',
-  'Red Bull Racing': '#3671C6', 'Brawn-Mercedes': '#C8F000',
-  'Vanwall': '#006633',
-  // Constructor championship name lookups (champion IS the team)
-  'Cooper-Climax (C)': '#006633', 'Lotus-Climax (C)': '#DAA520',
-  'Williams': '#1868DB', 'Tyrrell-Ford (C)': '#003DA5',
-  'Lotus-Ford (C)': '#DAA520', 'Brabham-Repco (C)': '#006847',
-  'McLaren-Ford (C)': '#FF8000', 'Williams-Ford (C)': '#1868DB',
-  'Williams-Honda (C)': '#1868DB', 'McLaren-TAG (C)': '#FF8000',
-  'McLaren-Honda (C)': '#FF8000', 'Williams-Renault (C)': '#1868DB',
-  'Benetton-Renault (C)': '#00B140',
-};
+import { getFlag } from '../data/flags';
+import {
+  CHAMPION_TEAM_COLORS,
+  F1_ERAS,
+  DRIVER_RECORDS,
+  CONSTRUCTOR_RECORDS,
+} from '../data/championshipHistory';
 
 // Resolve a color for any champion entry (works for both drivers & constructors)
 function getChampionColor(c) {
   return CHAMPION_TEAM_COLORS[c.team] || CHAMPION_TEAM_COLORS[c.champion] || '#555555';
 }
-
-/* ─── F1 Eras ─────────────────────────────────────────────────────────────── */
-const F1_ERAS = [
-  { id: 'pioneer',     name: 'Pioneer Era',               years: [1950, 1960], color: '#CD853F',
-    description: "Front-engine cars, minimal safety, gentlemen racers. Dominated by Fangio's genius." },
-  { id: 'revolution',  name: 'The Revolution',             years: [1961, 1970], color: '#DAA520',
-    description: "Rear-engine revolution, aero innovation. Jim Clark's brilliance, tragic losses." },
-  { id: 'garagiste',   name: 'Garagiste & Ground Effect',  years: [1971, 1982], color: '#228B22',
-    description: 'British constructors dominate. Ground effect. Stewart, Lauda, and Fittipaldi shine.' },
-  { id: 'turbo',       name: 'Turbo Era',                  years: [1983, 1993], color: '#9400D3',
-    description: 'Turbocharged monsters. Senna vs Prost — the greatest rivalry.' },
-  { id: 'schumacher',  name: 'Schumacher Era',             years: [1994, 2008], color: '#E8002D',
-    description: "Michael rewrites every record. Ferrari's unstoppable dynasty." },
-  { id: 'hybrid-dawn', name: 'Red Bull & Hybrid Dawn',     years: [2009, 2016], color: '#3671C6',
-    description: "Vettel's four-peat, then Mercedes' hybrid dominance begins." },
-  { id: 'hamilton',    name: 'Hamilton Era',               years: [2017, 2021], color: '#27F4D2',
-    description: "Hamilton matches Schumacher's 7 titles. Mercedes unprecedented dominance." },
-  { id: 'modern',      name: 'Ground Effect Returns',      years: [2022, 2026], color: '#FF8000',
-    description: "New regulations, Verstappen's dominance, McLaren's resurgence." },
-];
-
-/* ─── Records ─────────────────────────────────────────────────────────────── */
-const DRIVER_RECORDS = [
-  { label: 'Most Titles',         value: '7',        holders: 'Lewis Hamilton, Michael Schumacher', icon: '🏆' },
-  { label: 'Most Consecutive',    value: '4',        holders: 'Vettel (2010–13), Verstappen (2021–24)', icon: '🔥' },
-  { label: 'Youngest Champion',   value: '23y 134d', holders: 'Sebastian Vettel (2010)', icon: '⚡' },
-  { label: 'Oldest Champion',     value: '46y 41d',  holders: 'Juan Manuel Fangio (1957)', icon: '⏱' },
-  { label: 'Closest Title Fight', value: '0 pts',    holders: '2008 — Hamilton beat Massa on countback in the final corner', icon: '🎯' },
-  { label: 'Posthumous Champion', value: '1970',     holders: 'Jochen Rindt — won title after fatal crash at Monza', icon: '⭐' },
-];
-
-const CONSTRUCTOR_RECORDS = [
-  { label: 'Most Titles',         value: '16',       holders: 'Ferrari (1961, 1964, 1975–77, 1979, 1982–83, 1999–2004, 2007–08)', icon: '🏆' },
-  { label: 'Most Consecutive',    value: '8',        holders: 'Mercedes (2014–2021)', icon: '🔥' },
-  { label: 'First Champion',      value: '1958',     holders: 'Vanwall — the first constructor title ever awarded', icon: '⭐' },
-  { label: 'One-Season Wonder',   value: '2009',     holders: 'Brawn GP — won title in their only full season', icon: '⚡' },
-  { label: 'Longest Streak',      value: '75 yrs',   holders: 'Ferrari — every season since 1950', icon: '📅' },
-  { label: 'Latest Champion',     value: '2024–25',  holders: 'McLaren — back-to-back after 26-year drought', icon: '🎯' },
-];
 
 /* ─── Card ────────────────────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -220,10 +159,12 @@ function DominanceTimeline({ champions, mode }) {
 /* ─── Era Section ─────────────────────────────────────────────────────────── */
 function EraSection({ champions }) {
   const [expandedEra, setExpandedEra] = useState(null);
+  const lastDecided = champions[champions.length - 1]?.year;
+  const seasons = new Date().getFullYear() - 1950 + 1;
   return (
     <Card>
       <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>The Eras of Formula 1</h3>
-      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20 }}>75 years of evolution, revolution, and rivalry</p>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 20 }}>{seasons} seasons of evolution, revolution, and rivalry</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {F1_ERAS.map(era => {
           const eraChampions = champions.filter(c => c.year >= era.years[0] && c.year <= era.years[1]);
@@ -296,7 +237,9 @@ function EraSection({ champions }) {
               )}
               {isExpanded && eraChampions.length === 0 && (
                 <div style={{ padding: '8px 16px 8px 34px', fontSize: 11, color: 'var(--text-muted)' }}>
-                  No championships in this era for the selected view.
+                  {era.years[0] > lastDecided
+                    ? 'Season in progress. The first title of this era has not been decided yet.'
+                    : 'No championships in this era for the selected view.'}
                 </div>
               )}
             </div>
@@ -496,7 +439,7 @@ function NationalityGrid({ champions }) {
 }
 
 /* ─── Main Export ─────────────────────────────────────────────────────────── */
-export default function ChampionshipHistoryPreview({ champions = [], mode = 'drivers' }) {
+export default function ChampionshipHistoryView({ champions = [], mode = 'drivers' }) {
   const titleCounts = useMemo(() => {
     const counts = {};
     champions.forEach(c => { counts[c.champion] = (counts[c.champion] || 0) + 1; });
@@ -505,7 +448,9 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
       .sort((a, b) => b.count - a.count);
   }, [champions]);
 
-  const mostTitles = titleCounts[0];
+  // Several champions can share the record (Hamilton & Schumacher on 7).
+  const topCount = titleCounts[0]?.count;
+  const mostTitles = titleCounts.filter(t => t.count === topCount).map(t => t.name).join(' & ');
   const latest = champions[champions.length - 1];
 
   if (!champions.length) return null;
@@ -522,7 +467,7 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
           Championship History
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-          {champions.length} seasons of the pinnacle of motorsport
+          {champions.length} {mode === 'drivers' ? "drivers'" : "constructors'"} championships decided, {champions[0]?.year}–{latest?.year}
         </p>
       </div>
 
@@ -534,10 +479,10 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
         borderBottom: '1px solid var(--panel-border)',
       }}>
         {[
-          { label: 'Seasons',           value: champions.length,                     color: '#D4A800', mono: true },
+          { label: 'Titles Awarded',    value: champions.length,                     color: '#D4A800', mono: true },
           { label: 'Unique Champions',  value: titleCounts.length,                   color: '#e10600', mono: true },
-          { label: 'Most Titles',       value: `${mostTitles?.name} (${mostTitles?.count})`, color: '#27F4D2', mono: false },
-          { label: 'Reigning Champion', value: latest?.champion,                     color: '#FF8000', mono: false },
+          { label: 'Most Titles',       value: `${mostTitles} (${topCount})`,       color: '#27F4D2', mono: false },
+          { label: `Reigning Champion (${latest?.year})`, value: latest?.champion,   color: '#FF8000', mono: false },
         ].map((s, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ width: 3, height: 16, borderRadius: 2, background: s.color, alignSelf: 'center', flexShrink: 0 }} />
@@ -563,13 +508,13 @@ export default function ChampionshipHistoryPreview({ champions = [], mode = 'dri
       </div>
 
       {/* Titles + Records */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24, marginBottom: 24 }}>
         <TitlesChart champions={champions} mode={mode} />
         <RecordCards mode={mode} />
       </div>
 
       {/* Eras + Nationality */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
         <EraSection champions={champions} />
         <NationalityGrid champions={champions} />
       </div>

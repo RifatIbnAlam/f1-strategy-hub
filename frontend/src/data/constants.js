@@ -81,7 +81,8 @@ export function currentConstructor(standing) {
 export const TIRE_COMPOUNDS = {
   SOFT: { color: '#FF3333', label: 'Soft' },
   MEDIUM: { color: '#FFD700', label: 'Medium' },
-  HARD: { color: '#D0D0D0', label: 'Hard' },
+  // Mid grey rather than white so it stays visible in light mode
+  HARD: { color: '#A0A0A0', label: 'Hard' },
   INTERMEDIATE: { color: '#43B02A', label: 'Inter' },
   WET: { color: '#0067AD', label: 'Wet' },
 };

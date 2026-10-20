@@ -40,18 +40,31 @@ export default function RaceFlow() {
 
   const race = raceData?.[0];
   const results = race?.Results;
+  // 20 cars through 2025, 22 from 2026 (Cadillac) — size the chart to the field.
+  const fieldSize = results?.length || 20;
+
+  // Only races that have already been run have results to plot.
+  const pastRaces = useMemo(() => {
+    const now = Date.now();
+    return (schedule || []).filter(r => new Date(`${r.date}T${r.time || '00:00:00Z'}`).getTime() < now);
+  }, [schedule]);
 
   // Driver info from race results
   const driverInfo = useMemo(() => {
     const map = {};
+    const n = results?.length || 20;
     (results || []).forEach(r => {
+      const grid = parseInt(r.grid, 10);
       map[r.Driver?.driverId] = {
         code: r.Driver?.code || r.Driver?.familyName?.substring(0, 3).toUpperCase(),
         name: `${r.Driver?.givenName} ${r.Driver?.familyName}`,
-        team: r.Constructor?.name,
+        team: r.Constructor?.constructorId || r.Constructor?.name,
         nationality: r.Driver?.nationality,
-        grid: parseInt(r.grid) || 20,
-        finalPos: parseInt(r.position) || 20,
+        // Grid 0 means a pit-lane start: plot it at the back of the field.
+        grid: grid > 0 ? grid : n,
+        pitLaneStart: grid === 0,
+        finalPos: parseInt(r.position, 10) || n,
+        classified: /^\d+$/.test(r.positionText || ''),
         status: r.status,
       };
     });
@@ -166,10 +179,10 @@ export default function RaceFlow() {
 
       {/* Selectors */}
       <Card style={{ marginBottom: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>SEASON</label>
-            <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setRound(null); setHighlightDriver(null); }}
+            <select value={year} onChange={e => { setYear(parseInt(e.target.value, 10)); setRound(null); setHighlightDriver(null); }}
               style={{
                 width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)',
                 borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
@@ -181,14 +194,14 @@ export default function RaceFlow() {
           </div>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>RACE</label>
-            <select value={round || ''} onChange={e => { setRound(e.target.value); setHighlightDriver(null); }}
+            <select value={round || ''} onChange={e => { setRound(e.target.value || null); setHighlightDriver(null); }}
               disabled={schedLoading}
               style={{
                 width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)',
                 borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13,
               }}>
               <option value="">Select a race...</option>
-              {schedule?.map(r => (
+              {pastRaces.map(r => (
                 <option key={r.round} value={r.round}>R{r.round} — {r.raceName}</option>
               ))}
             </select>
@@ -270,8 +283,9 @@ export default function RaceFlow() {
                   tickFormatter={v => v === 0 ? 'G' : v}
                 />
                 <YAxis
-                  reversed domain={[1, showTop10Only ? 10 : 20]}
-                  ticks={showTop10Only ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [1, 5, 10, 15, 20]}
+                  reversed domain={[1, showTop10Only ? 10 : fieldSize]}
+                  ticks={showTop10Only ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [1, 5, 10, 15, 20, fieldSize].filter((v, i, a) => v <= fieldSize && a.indexOf(v) === i)}
+                  allowDataOverflow
                   stroke="var(--text-muted)" fontSize={11}
                   tickFormatter={v => `P${v}`}
                 />
@@ -296,20 +310,20 @@ export default function RaceFlow() {
           </Card>
 
           {/* Driver Legend + Overtake Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
             {/* Driver Legend */}
             <Card>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
                 Drivers — Click to Highlight
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {drivers
+                {[...drivers]
                   .sort((a, b) => (driverInfo[a]?.finalPos || 99) - (driverInfo[b]?.finalPos || 99))
                   .map(driverId => {
                     const info = driverInfo[driverId];
                     const color = getTeamColor(info?.team);
                     const isActive = !highlightDriver || highlightDriver === driverId;
-                    const gained = info.grid - info.finalPos;
+                    const gained = info.classified ? info.grid - info.finalPos : 0;
                     return (
                       <div
                         key={driverId}
@@ -326,12 +340,12 @@ export default function RaceFlow() {
                         <span style={{
                           fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', width: 24,
                           fontFamily: "'JetBrains Mono', monospace",
-                        }}>P{info.finalPos}</span>
+                        }}>{info.classified ? `P${info.finalPos}` : 'DNF'}</span>
                         <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>
                           {getFlag(info.nationality)} {info.code}
                         </span>
                         <span style={{ fontSize: 10, color: 'var(--text-muted)', marginRight: 4 }}>
-                          G{info.grid}→P{info.finalPos}
+                          {info.pitLaneStart ? 'PL' : `G${info.grid}`}→{info.classified ? `P${info.finalPos}` : 'DNF'}
                         </span>
                         <span style={{
                           fontSize: 10, fontWeight: 700,
@@ -349,7 +363,7 @@ export default function RaceFlow() {
             {/* Overtake Leaders */}
             <Card>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-                Overtake Statistics
+                Positions Gained (Lap to Lap)
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {overtakeStats.slice(0, 10).map((d, i) => {
@@ -387,7 +401,7 @@ export default function RaceFlow() {
               </div>
               {overtakeStats.length > 0 && (
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 12, fontStyle: 'italic' }}>
-                  Positions gained on-track (includes pit stop undercutting/overcutting)
+                  Sum of lap-to-lap position gains. Includes places gained through pit cycles and other drivers' retirements, not just on-track passes.
                 </div>
               )}
             </Card>

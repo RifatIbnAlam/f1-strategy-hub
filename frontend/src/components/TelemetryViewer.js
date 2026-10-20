@@ -4,12 +4,12 @@ import {
   ResponsiveContainer, Legend,
 } from 'recharts';
 import { useApi } from '../hooks/useApi';
-import { getSessions, getDrivers, getLaps, getStints } from '../services/openf1';
-import { getDriverColor } from '../data/constants';
-import { TIRE_COMPOUNDS } from '../data/constants';
-import { Activity, Loader, Radio, Gauge } from 'lucide-react';
+import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
+import { getOpenF1DriverColor, TIRE_COMPOUNDS } from '../data/constants';
+import { Activity, Loader, Radio, Gauge, Cpu } from 'lucide-react';
 import { getFlag } from '../data/flags';
 import SectorAnalysis from './SectorAnalysis';
+import CarTelemetry from './CarTelemetry';
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -20,7 +20,7 @@ const Card = ({ children, style }) => (
 );
 
 /* ─── Lap Time Table ──────────────────────────────────────────────────────── */
-const LapTimeTable = ({ laps, stints, driverColor }) => {
+const LapTimeTable = ({ laps, stints, selectedLap, onSelectLap }) => {
   if (!laps || laps.length === 0) return null;
 
   // Find best lap
@@ -45,6 +45,7 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
         <tbody>
           {validLaps.map((lap, i) => {
             const isBest = lap === bestLap;
+            const isSelected = selectedLap === lap.lap_number;
             const stint = stints?.find(s =>
               lap.lap_number >= s.lap_start && lap.lap_number <= s.lap_end
             );
@@ -52,9 +53,10 @@ const LapTimeTable = ({ laps, stints, driverColor }) => {
             const compoundColor = TIRE_COMPOUNDS[compound]?.color || '#888';
 
             return (
-              <tr key={i} style={{
+              <tr key={i} onClick={() => onSelectLap(lap.lap_number)} title="Show car telemetry for this lap" style={{
                 borderBottom: '1px solid var(--app-bg-alt)',
-                background: isBest ? 'rgba(147, 51, 234, 0.1)' : 'transparent',
+                background: isSelected ? 'var(--accent-soft)' : isBest ? 'rgba(147, 51, 234, 0.1)' : 'transparent',
+                cursor: 'pointer',
               }}>
                 <td style={{
                   padding: '6px', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
@@ -108,31 +110,17 @@ function formatTime(seconds) {
   return `${parseFloat(secs).toFixed(3)}`;
 }
 
-function formatSessionLabel(session) {
-  const grandPrixName = session.meeting_name?.trim();
-  const locationLabel = [session.location, session.country_name].filter(Boolean).join(', ');
-  const sessionName = session.session_name?.trim() || session.session_type?.trim() || 'Session';
-  const sessionDate = session.date_start
-    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
-
-  const eventLabel = grandPrixName || locationLabel || session.circuit_short_name || `Session ${session.session_key}`;
-  const detailLabel = [sessionDate, session.circuit_short_name].filter(Boolean).join(' • ');
-
-  return detailLabel
-    ? `${eventLabel} — ${sessionName} (${detailLabel})`
-    : `${eventLabel} — ${sessionName}`;
-}
-
 /* ─── Main Telemetry Viewer ───────────────────────────────────────────────── */
 export default function TelemetryViewer() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
+  const [hideOutliers, setHideOutliers] = useState(true);
+  const [telemetryLap, setTelemetryLap] = useState(null);
 
   // Fetch sessions for the year
   const { data: sessions, loading: sessionsLoading } = useApi(
-    () => getSessions(year, 'Race'),
+    () => getRaceSessions(year),
     [year]
   );
 
@@ -161,13 +149,30 @@ export default function TelemetryViewer() {
     !!(selectedSession && selectedDriver)
   );
 
-  const driverColor = getDriverColor(selectedDriver);
+  // Get unique drivers for dropdown
+  const uniqueDrivers = useMemo(() => dedupeDrivers(drivers), [drivers]);
+  const driverInfo = uniqueDrivers.find(d => d.driver_number === selectedDriver);
+  const driverColor = getOpenF1DriverColor(driverInfo);
 
-  // Build lap time chart data
+  const timedLaps = useMemo(
+    () => (laps || []).filter(l => l.lap_duration && l.lap_duration > 0).sort((a, b) => a.lap_number - b.lap_number),
+    [laps]
+  );
+  const fastestLap = useMemo(
+    () => timedLaps.reduce((best, l) => (!best || l.lap_duration < best.lap_duration ? l : best), null),
+    [timedLaps]
+  );
+  // Default the telemetry trace to the driver's fastest lap.
+  const activeLap = timedLaps.find(l => l.lap_number === telemetryLap) || fastestLap;
+
+  // Build lap time chart data. Pit and safety-car laps can be 20–60 s slower
+  // and squash the racing laps into a flat line, so optionally hide laps more
+  // than 7% off the median.
   const lapChartData = useMemo(() => {
-    if (!laps) return [];
-    return laps
-      .filter(l => l.lap_duration && l.lap_duration > 0)
+    const sorted = timedLaps.map(l => l.lap_duration).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] || 0;
+    return timedLaps
+      .filter(l => !hideOutliers || (l.lap_duration < median * 1.07 && !l.is_pit_out_lap))
       .map(l => ({
         lap: l.lap_number,
         time: parseFloat(l.lap_duration?.toFixed(3)),
@@ -175,28 +180,9 @@ export default function TelemetryViewer() {
         s2: parseFloat(l.duration_sector_2?.toFixed(3)) || null,
         s3: parseFloat(l.duration_sector_3?.toFixed(3)) || null,
       }));
-  }, [laps]);
+  }, [timedLaps, hideOutliers]);
 
-  // Get unique drivers for dropdown
-  const uniqueDrivers = useMemo(() => {
-    if (!drivers) return [];
-    const seen = new Set();
-    return drivers.filter(d => {
-      if (seen.has(d.driver_number)) return false;
-      seen.add(d.driver_number);
-      return true;
-    });
-  }, [drivers]);
-
-  const sessionOptions = useMemo(() => {
-    if (!sessions) return [];
-
-    return [...sessions].sort((a, b) => {
-      const aTime = a.date_start ? new Date(a.date_start).getTime() : 0;
-      const bTime = b.date_start ? new Date(b.date_start).getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [sessions]);
+  const sessionOptions = sessions || [];
 
   return (
     <div>
@@ -207,7 +193,7 @@ export default function TelemetryViewer() {
           Telemetry Viewer
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-          Live lap times, sector data, and tire strategies from OpenF1
+          Lap times, sector splits, tyre strategy, and car telemetry (speed, throttle, brake, gear) from OpenF1
         </p>
       </div>
 
@@ -216,7 +202,7 @@ export default function TelemetryViewer() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>YEAR</label>
-            <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSelectedSession(null); setSelectedDriver(null); }}
+            <select value={year} onChange={e => { setYear(parseInt(e.target.value, 10)); setSelectedSession(null); setSelectedDriver(null); setTelemetryLap(null); }}
               style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               {Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -228,7 +214,7 @@ export default function TelemetryViewer() {
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading sessions...
               </div>
             ) : (
-              <select value={selectedSession || ''} onChange={e => { setSelectedSession(e.target.value); setSelectedDriver(null); }}
+              <select value={selectedSession || ''} onChange={e => { setSelectedSession(e.target.value || null); setSelectedDriver(null); setTelemetryLap(null); }}
                 style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
                 <option value="">Select a race...</option>
                 {sessionOptions.map(s => (
@@ -246,7 +232,7 @@ export default function TelemetryViewer() {
                 <Loader size={14} style={{ animation: 'pulse 1s infinite' }} /> Loading drivers...
               </div>
             ) : (
-              <select value={selectedDriver || ''} onChange={e => setSelectedDriver(parseInt(e.target.value))}
+              <select value={selectedDriver || ''} onChange={e => { setSelectedDriver(parseInt(e.target.value, 10) || null); setTelemetryLap(null); }}
                 style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
                 <option value="">Select a driver...</option>
                 {uniqueDrivers.map(d => (
@@ -267,12 +253,18 @@ export default function TelemetryViewer() {
           <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>Fetching telemetry data from OpenF1...</div>
         </Card>
       ) : laps && laps.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
           {/* Lap Time Chart */}
           <Card style={{ gridColumn: '1 / -1' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-              Lap Time Progression
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Lap Time Progression
+              </h3>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={hideOutliers} onChange={e => setHideOutliers(e.target.checked)} />
+                Hide pit / safety-car laps
+              </label>
+            </div>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={lapChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--panel-border)" />
@@ -353,12 +345,27 @@ export default function TelemetryViewer() {
             )}
           </Card>
 
+          {/* Car Telemetry */}
+          <Card style={{ gridColumn: '1 / -1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <Cpu size={16} color="var(--accent)" />
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Car Telemetry, Lap {activeLap?.lap_number}
+                {activeLap === fastestLap && <span style={{ marginLeft: 8, fontSize: 10, color: '#a855f7' }}>FASTEST</span>}
+              </h3>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 12 }}>
+              Click any lap in the table below to load its trace. Hovering one channel syncs the cursor across all four.
+            </p>
+            <CarTelemetry sessionKey={selectedSession} driverNumber={selectedDriver} lap={activeLap} color={driverColor} />
+          </Card>
+
           {/* Lap Time Table */}
           <Card style={{ gridColumn: '1 / -1' }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
               Detailed Lap Times
             </h3>
-            <LapTimeTable laps={laps} stints={stints} driverColor={driverColor} />
+            <LapTimeTable laps={laps} stints={stints} selectedLap={activeLap?.lap_number} onSelectLap={setTelemetryLap} />
           </Card>
         </div>
       ) : selectedSession && selectedDriver ? (

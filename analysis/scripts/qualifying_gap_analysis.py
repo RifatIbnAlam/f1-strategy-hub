@@ -18,6 +18,8 @@ import matplotlib as mpl
 from collections import defaultdict
 import os
 
+# FastF1 raises if the cache directory does not exist yet
+os.makedirs('./cache', exist_ok=True)
 fastf1.Cache.enable_cache('./cache')
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['figure.facecolor'] = '#0a0a12'
@@ -64,8 +66,8 @@ def analyze_qualifying_gaps(year, num_races=5):
 
             for team, d1, d2 in pairs:
                 try:
-                    d1_laps = quali.laps.pick_driver(d1)
-                    d2_laps = quali.laps.pick_driver(d2)
+                    d1_laps = quali.laps.pick_drivers(d1)
+                    d2_laps = quali.laps.pick_drivers(d2)
 
                     d1_best = d1_laps.pick_fastest()
                     d2_best = d2_laps.pick_fastest()

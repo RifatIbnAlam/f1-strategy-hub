@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
-import { getSessions, getDrivers, getLaps, getStints } from '../services/openf1';
-import { getDriverColor, TIRE_COMPOUNDS } from '../data/constants';
+import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
+import { getOpenF1DriverColor, distinctColor, TIRE_COMPOUNDS } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,12 +9,28 @@ import {
 } from 'recharts';
 import { ArrowDownUp, Loader, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
 
-function formatSessionLabel(session) {
-  const name = session.meeting_name?.trim() || session.circuit_short_name || `Session ${session.session_key}`;
-  const date = session.date_start
-    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
-  return date ? `${name} (${date})` : name;
+/**
+ * Time each driver crossed the line at the end of every lap, in ms.
+ * The end of lap N is the start of lap N+1; the final lap ends at its start
+ * plus its duration. Using timestamps (rather than summing lap durations)
+ * keeps the gap correct even when a lap has no recorded duration, and
+ * includes the gap built on lap 1.
+ */
+export function lineCrossings(laps) {
+  const cross = {};
+  laps.forEach(l => {
+    if (!l.date_start) return;
+    const start = new Date(l.date_start).getTime();
+    cross[l.lap_number - 1] = start;
+    if (l.lap_duration && cross[l.lap_number] == null) {
+      cross[l.lap_number] = start + l.lap_duration * 1000;
+    }
+  });
+  // A following lap's start is more precise than start + duration.
+  laps.forEach(l => {
+    if (l.date_start) cross[l.lap_number - 1] = new Date(l.date_start).getTime();
+  });
+  return cross;
 }
 
 const Card = ({ children, style }) => (
@@ -32,7 +48,7 @@ export default function UndercutAnalyzer() {
   const [driver2, setDriver2] = useState(null);
 
   const { data: sessions, loading: sessLoad } = useApi(
-    () => getSessions(year, 'Race'), [year]
+    () => getRaceSessions(year), [year]
   );
   const { data: drivers, loading: drvLoad } = useApi(
     () => sessionKey ? getDrivers(sessionKey) : Promise.resolve([]),
@@ -55,27 +71,13 @@ export default function UndercutAnalyzer() {
     [sessionKey, driver2], !!(sessionKey && driver2)
   );
 
-  const uniqueDrivers = useMemo(() => {
-    if (!drivers) return [];
-    const seen = new Set();
-    return drivers.filter(d => {
-      if (seen.has(d.driver_number)) return false;
-      seen.add(d.driver_number); return true;
-    });
-  }, [drivers]);
-
-  const sessionOpts = useMemo(() => {
-    if (!sessions) return [];
-    return [...sessions].sort((a, b) =>
-      (b.date_start ? new Date(b.date_start).getTime() : 0) -
-      (a.date_start ? new Date(a.date_start).getTime() : 0)
-    );
-  }, [sessions]);
+  const uniqueDrivers = useMemo(() => dedupeDrivers(drivers), [drivers]);
+  const sessionOpts = sessions || [];
 
   const d1Info = uniqueDrivers.find(d => d.driver_number === driver1);
   const d2Info = uniqueDrivers.find(d => d.driver_number === driver2);
-  const color1 = getDriverColor(driver1);
-  const color2 = getDriverColor(driver2);
+  const color1 = getOpenF1DriverColor(d1Info);
+  const color2 = distinctColor(getOpenF1DriverColor(d2Info), color1);
 
   // ── Core undercut/overcut analysis ──
   const analysis = useMemo(() => {
@@ -85,25 +87,14 @@ export default function UndercutAnalyzer() {
     const v1 = valid(laps1);
     const v2 = valid(laps2);
 
-    // Build lap maps
     const lapMap1 = {};
     v1.forEach(l => { lapMap1[l.lap_number] = l.lap_duration; });
     const lapMap2 = {};
     v2.forEach(l => { lapMap2[l.lap_number] = l.lap_duration; });
 
-    // Build cumulative time maps (race time elapsed)
-    const cumTime1 = {};
-    let cum1 = 0;
-    v1.sort((a, b) => a.lap_number - b.lap_number).forEach(l => {
-      cum1 += l.lap_duration;
-      cumTime1[l.lap_number] = cum1;
-    });
-    const cumTime2 = {};
-    let cum2 = 0;
-    v2.sort((a, b) => a.lap_number - b.lap_number).forEach(l => {
-      cum2 += l.lap_duration;
-      cumTime2[l.lap_number] = cum2;
-    });
+    // Real on-track gap at the end of each lap, from line-crossing timestamps
+    const cross1 = lineCrossings(laps1);
+    const cross2 = lineCrossings(laps2);
 
     // Find all pit stops for both drivers
     const pitLaps1 = stints1
@@ -126,29 +117,20 @@ export default function UndercutAnalyzer() {
     });
 
     // Calculate gap: positive = D2 behind D1 (D1 ahead)
-    const maxLap = Math.max(
-      ...Object.keys(cumTime1).map(Number),
-      ...Object.keys(cumTime2).map(Number)
-    );
-    const minLap = Math.min(
-      ...Object.keys(cumTime1).map(Number),
-      ...Object.keys(cumTime2).map(Number)
-    );
+    const commonLaps = Object.keys(cross1).map(Number).filter(l => l >= 1 && cross2[l] != null).sort((a, b) => a - b);
 
     const gapData = [];
-    for (let lap = minLap; lap <= maxLap; lap++) {
-      if (cumTime1[lap] != null && cumTime2[lap] != null) {
-        gapData.push({
-          lap,
-          gap: parseFloat((cumTime2[lap] - cumTime1[lap]).toFixed(3)),
-          lapTime1: lapMap1[lap] || null,
-          lapTime2: lapMap2[lap] || null,
-          compound1: compound1[lap] || null,
-          compound2: compound2[lap] || null,
-          isPit1: pitLaps1.includes(lap),
-          isPit2: pitLaps2.includes(lap),
-        });
-      }
+    for (const lap of commonLaps) {
+      gapData.push({
+        lap,
+        gap: parseFloat(((cross2[lap] - cross1[lap]) / 1000).toFixed(3)),
+        lapTime1: lapMap1[lap] || null,
+        lapTime2: lapMap2[lap] || null,
+        compound1: compound1[lap] || null,
+        compound2: compound2[lap] || null,
+        isPit1: pitLaps1.includes(lap),
+        isPit2: pitLaps2.includes(lap),
+      });
     }
 
     // Detect undercut/overcut windows around pit stops
@@ -247,7 +229,7 @@ export default function UndercutAnalyzer() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16 }}>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>YEAR</label>
-            <select value={year} onChange={e => { setYear(parseInt(e.target.value)); setSessionKey(null); setDriver1(null); setDriver2(null); }}
+            <select value={year} onChange={e => { setYear(parseInt(e.target.value, 10)); setSessionKey(null); setDriver1(null); setDriver2(null); }}
               style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               {Array.from({ length: new Date().getFullYear() - 2022 }, (_, i) => new Date().getFullYear() - i).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -265,7 +247,7 @@ export default function UndercutAnalyzer() {
           </div>
           <div>
             <label style={{ fontSize: 11, color: color1, fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 1</label>
-            <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value))}
+            <select value={driver1 || ''} onChange={e => setDriver1(parseInt(e.target.value, 10) || null)}
               disabled={!sessionKey}
               style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color1}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               <option value="">Select...</option>
@@ -278,7 +260,7 @@ export default function UndercutAnalyzer() {
           </div>
           <div>
             <label style={{ fontSize: 11, color: color2, fontWeight: 600, letterSpacing: '1px', marginBottom: 6, display: 'block' }}>DRIVER 2</label>
-            <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value))}
+            <select value={driver2 || ''} onChange={e => setDriver2(parseInt(e.target.value, 10) || null)}
               disabled={!sessionKey}
               style={{ width: '100%', background: 'var(--input-bg)', border: `1px solid ${color2}44`, borderRadius: 6, color: 'var(--text-primary)', padding: '8px 12px', fontSize: 13 }}>
               <option value="">Select...</option>
@@ -522,7 +504,8 @@ export default function UndercutAnalyzer() {
         <strong style={{ color: 'var(--text-secondary)' }}>How it works:</strong> An <strong>undercut</strong> occurs
         when a driver pits before their rival to gain an advantage from fresh tires. An <strong>overcut</strong> is
         when a driver stays out longer, betting on clear air and falling tire performance of the pitter. The analyzer
-        compares cumulative race time gaps before and after each pit window to quantify the effect in seconds.
+        measures the real on-track gap from line-crossing timestamps (summed lap times drift whenever a lap has no
+        recorded time), one lap before the first stop and two laps after the second, and reports the net swing.
       </div>
     </div>
   );

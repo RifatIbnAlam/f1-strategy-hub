@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ChampionshipHistoryPreview from '../preview';
+import ChampionshipHistoryView from './ChampionshipHistoryView';
 import { DRIVER_CHAMPIONS, CONSTRUCTOR_CHAMPIONS } from '../data/championshipHistory';
 import { Crown, Users } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export default function ChampionshipHistory() {
         ))}
       </div>
 
-      <ChampionshipHistoryPreview
+      <ChampionshipHistoryView
         champions={tab === 'drivers' ? DRIVER_CHAMPIONS : CONSTRUCTOR_CHAMPIONS}
         mode={tab}
       />

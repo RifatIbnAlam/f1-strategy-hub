@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useApi } from '../hooks/useApi';
-import { getSessions, getDrivers, getLaps, getStints } from '../services/openf1';
+import { getRaceSessions, getDrivers, getLaps, getStints, formatSessionLabel, uniqueDrivers as dedupeDrivers } from '../services/openf1';
 import { TIRE_COMPOUNDS } from '../data/constants';
 import { getFlag } from '../data/flags';
 import {
@@ -31,13 +31,11 @@ function formatTime(s) {
   return m > 0 ? `${m}:${sec.padStart(6, '0')}` : `${parseFloat(sec).toFixed(3)}`;
 }
 
-function formatSessionLabel(session) {
-  const name = session.meeting_name?.trim() || session.circuit_short_name || `Session ${session.session_key}`;
-  const date = session.date_start
-    ? new Date(session.date_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
-  return date ? `${name} (${date})` : name;
-}
+// Fuel burn masks tyre wear: the car gets ~0.06 s/lap faster as fuel burns
+// off, so a raw lap-time slope understates degradation. These are typical
+// values used to fuel-correct the fitted slope.
+const START_FUEL_KG = 100;
+const FUEL_EFFECT_S_PER_KG = 0.033;
 
 const Card = ({ children, style }) => (
   <div style={{
@@ -53,7 +51,7 @@ export default function RealTireData() {
   const [driverNum, setDriverNum] = useState(null);
 
   const { data: sessions, loading: sessLoad } = useApi(
-    () => getSessions(year, 'Race'), [year]
+    () => getRaceSessions(year), [year]
   );
 
   const { data: drivers, loading: drvLoad } = useApi(
@@ -71,40 +69,38 @@ export default function RealTireData() {
     [sessionKey, driverNum], !!(sessionKey && driverNum)
   );
 
-  const uniqueDrivers = useMemo(() => {
-    if (!drivers) return [];
-    const seen = new Set();
-    return drivers.filter(d => { if (seen.has(d.driver_number)) return false; seen.add(d.driver_number); return true; });
-  }, [drivers]);
-
-  const sessionOpts = useMemo(() => {
-    if (!sessions) return [];
-    return [...sessions].sort((a, b) => {
-      const at = a.date_start ? new Date(a.date_start).getTime() : 0;
-      const bt = b.date_start ? new Date(b.date_start).getTime() : 0;
-      return bt - at;
-    });
-  }, [sessions]);
+  const uniqueDrivers = useMemo(() => dedupeDrivers(drivers), [drivers]);
+  const sessionOpts = sessions || [];
 
   // Analyze tire degradation per stint
   const analysis = useMemo(() => {
     if (!laps?.length || !stints?.length) return null;
 
-    const validLaps = laps.filter(l => l.lap_duration && l.lap_duration > 10 && l.lap_duration < 200);
+    const orderedStints = [...stints].sort((a, b) => a.lap_start - b.lap_start);
+    const raceLaps = Math.max(...laps.map(l => l.lap_number));
+    const fuelGainPerLap = (START_FUEL_KG / raceLaps) * FUEL_EFFECT_S_PER_KG;
 
-    const stintAnalysis = stints.map((stint, idx) => {
+    // In-laps (last lap before a stop) and out-laps include pit-lane time.
+    const inLaps = new Set(orderedStints.slice(0, -1).map(s => s.lap_end));
+    const validLaps = laps.filter(l =>
+      l.lap_duration && l.lap_duration > 10 && l.lap_duration < 200 &&
+      !l.is_pit_out_lap && !inLaps.has(l.lap_number) && l.lap_number > 1
+    );
+
+    const stintAnalysis = orderedStints.map((stint, idx) => {
       const stintLaps = validLaps.filter(l =>
         l.lap_number >= stint.lap_start && l.lap_number <= (stint.lap_end || 999)
       );
 
-      // Filter out outliers (pit in/out laps, SC laps) — laps > 150% of median
+      // Drop safety-car / traffic outliers relative to the stint median
       const times = stintLaps.map(l => l.lap_duration).sort((a, b) => a - b);
       const median = times[Math.floor(times.length / 2)] || 0;
-      const filtered = stintLaps.filter(l => l.lap_duration < median * 1.5 && l.lap_duration > median * 0.85);
+      const filtered = stintLaps.filter(l => l.lap_duration < median * 1.07 && l.lap_duration > median * 0.95);
 
-      // Build data points with tire age
+      // x = actual tyre age, including laps run before this stint (used sets)
+      const ageAtStart = stint.tyre_age_at_start || 0;
       const points = filtered.map(l => ({
-        x: l.lap_number - stint.lap_start + 1, // tire age
+        x: ageAtStart + (l.lap_number - stint.lap_start) + 1,
         y: l.lap_duration,
       }));
 
@@ -116,8 +112,10 @@ export default function RealTireData() {
         compound,
         lapStart: stint.lap_start,
         lapEnd: stint.lap_end || stintLaps[stintLaps.length - 1]?.lap_number || stint.lap_start,
+        ageAtStart,
         totalLaps: filtered.length,
-        degradation: reg.slope, // seconds per lap
+        degradation: reg.slope, // raw seconds per lap
+        fuelCorrected: reg.slope + fuelGainPerLap,
         basePace: reg.intercept,
         r2: reg.r2,
         points,
@@ -194,7 +192,7 @@ export default function RealTireData() {
         </div>
         <div>
           <label style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '1px', marginBottom: 4, display: 'block' }}>DRIVER</label>
-          <select value={driverNum || ''} onChange={e => setDriverNum(parseInt(e.target.value))}
+          <select value={driverNum || ''} onChange={e => setDriverNum(parseInt(e.target.value, 10) || null)}
             disabled={drvLoad || !sessionKey}
             style={{ width: '100%', background: 'var(--input-bg)', border: '1px solid var(--input-border)', borderRadius: 6, color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}>
             <option value="">Select driver...</option>
@@ -219,7 +217,7 @@ export default function RealTireData() {
           {/* Degradation Chart */}
           <div style={{ marginBottom: 20 }}>
             <h4 style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10 }}>
-              Lap Time vs Tire Age — Compound-Colored
+              Lap Time by Race Lap, Coloured by Compound
             </h4>
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -253,7 +251,7 @@ export default function RealTireData() {
             <TrendingUp size={12} style={{ marginRight: 4 }} />
             Fitted Degradation Rates per Stint
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: 12 }}>
             {analysis.stintAnalysis.map((stint, i) => {
               const compColor = TIRE_COMPOUNDS[stint.compound]?.color || '#888';
               return (
@@ -280,13 +278,27 @@ export default function RealTireData() {
                         {stint.lapStart}–{stint.lapEnd} ({stint.totalLaps})
                       </span>
                     </div>
+                    {stint.ageAtStart > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Tyre age at fit</span>
+                        <span style={{ color: 'var(--text-primary)', fontFamily: "'JetBrains Mono', monospace" }}>
+                          used ({stint.ageAtStart} laps)
+                        </span>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Degradation</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Raw slope</span>
+                      <span style={{ color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>
+                        {stint.degradation > 0 ? '+' : ''}{stint.degradation.toFixed(3)} s/lap
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Fuel-corrected deg</span>
                       <span style={{
-                        color: stint.degradation > 0.08 ? 'var(--accent)' : stint.degradation > 0.04 ? '#D4A800' : '#27F4D2',
+                        color: stint.fuelCorrected > 0.12 ? 'var(--accent)' : stint.fuelCorrected > 0.06 ? '#D4A800' : '#27F4D2',
                         fontWeight: 700, fontFamily: "'JetBrains Mono', monospace",
                       }}>
-                        {stint.degradation > 0 ? '+' : ''}{stint.degradation.toFixed(3)} s/lap
+                        {stint.fuelCorrected > 0 ? '+' : ''}{stint.fuelCorrected.toFixed(3)} s/lap
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -317,10 +329,11 @@ export default function RealTireData() {
               background: 'var(--accent-soft)', border: '1px solid var(--accent-border)',
               fontSize: 11, color: 'var(--text-secondary)',
             }}>
-              <strong>How to read:</strong> Degradation rate is the slope of a linear fit to lap times within each stint.
-              A value of +0.050 s/lap means each successive lap is ~50ms slower. High R² (≥0.7) indicates
-              consistent, predictable degradation. Low R² suggests safety car periods, traffic, or weather affected the stint.
-              Compare these real values with the simulation model's tire degradation parameters above.
+              <strong>How to read:</strong> The raw slope is a least-squares fit of lap time against tyre age within each stint,
+              after removing the first lap, pit in/out laps, and laps more than 7% off the stint median (safety car, traffic).
+              Burning fuel makes the car ~{((START_FUEL_KG * FUEL_EFFECT_S_PER_KG) / 60).toFixed(3)} s/lap faster on a 60-lap race,
+              which hides wear, so the fuel-corrected figure adds that back ({START_FUEL_KG} kg start, {FUEL_EFFECT_S_PER_KG} s/kg).
+              High R² (≥0.7) means consistent, predictable degradation. Compare these values with the simulator's compound model above.
             </div>
           )}
         </>

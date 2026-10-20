@@ -6,6 +6,7 @@ import TelemetryViewer from './components/TelemetryViewer';
 import ChampionshipHistory from './components/ChampionshipHistory';
 import RaceFlow from './components/RaceFlow';
 import UndercutAnalyzer from './components/UndercutAnalyzer';
+import ErrorBoundary from './components/ErrorBoundary';
 import {
   LayoutDashboard,
   GitCompare,
@@ -74,6 +75,8 @@ const globalStyles = `
     overflow-x: hidden;
     transition: background 0.25s ease, color 0.25s ease;
   }
+  /* Long <option> labels otherwise set a select's min width and push the page wider than a phone screen */
+  select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
   a, button, input, select {
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
   }
@@ -120,6 +123,7 @@ const globalStyles = `
   .app-main {
     margin-left: 240px;
     flex: 1;
+    min-width: 0;
     padding: 88px 32px 32px;
     min-height: 100vh;
     animation: fadeIn 0.3s ease;
@@ -185,20 +189,51 @@ const VIEWS = [
   { id: 'history', label: 'Championships', icon: Trophy },
 ];
 
+// localStorage can throw (private mode, blocked storage); the theme is only a
+// convenience, so fail quietly.
+const storage = {
+  get: (key) => { try { return window.localStorage.getItem(key); } catch (_) { return null; } },
+  set: (key, value) => { try { window.localStorage.setItem(key, value); } catch (_) { /* ignore */ } },
+};
+
+// Hash routing (#/strategy) keeps views linkable and works on GitHub Pages
+// without server-side rewrites.
+const viewFromHash = () => {
+  const id = window.location.hash.replace(/^#\/?/, '');
+  return VIEWS.some(v => v.id === id) ? id : 'dashboard';
+};
+
 /* ─── App Component ─────────────────────────────────────────────────────────── */
 export default function App() {
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveViewState] = useState(viewFromHash);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
-    const savedTheme = window.localStorage.getItem('f1-theme');
-    if (savedTheme) return savedTheme;
+    const savedTheme = storage.get('f1-theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
     return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   });
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 960);
 
+  const setActiveView = (id) => {
+    window.location.hash = id === 'dashboard' ? '' : `/${id}`;
+    setActiveViewState(id);
+    window.scrollTo(0, 0);
+  };
+
+  useEffect(() => {
+    const onHashChange = () => setActiveViewState(viewFromHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  useEffect(() => {
+    const view = VIEWS.find(v => v.id === activeView);
+    document.title = activeView === 'dashboard' ? 'F1 Strategy Hub' : `${view.label} · F1 Strategy Hub`;
+  }, [activeView]);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    window.localStorage.setItem('f1-theme', theme);
+    storage.set('f1-theme', theme);
   }, [theme]);
 
   useEffect(() => {
@@ -236,6 +271,7 @@ export default function App() {
           <button
             className="toolbar-button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             <span style={{ fontSize: 12, fontWeight: 700 }}>
@@ -246,6 +282,8 @@ export default function App() {
             <button
               className="toolbar-button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
             >
               {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -290,6 +328,7 @@ export default function App() {
               return (
                 <button
                   key={view.id}
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => { setActiveView(view.id); setMobileMenuOpen(false); }}
                   style={{
                     width: '100%',
@@ -365,7 +404,9 @@ export default function App() {
 
         {/* ── Main Content ── */}
         <main className="app-main">
-          {renderView()}
+          <ErrorBoundary resetKey={activeView}>
+            {renderView()}
+          </ErrorBoundary>
         </main>
       </div>
     </>

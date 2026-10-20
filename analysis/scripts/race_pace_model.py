@@ -19,6 +19,8 @@ from scipy import stats
 from scipy.optimize import curve_fit
 import os
 
+# FastF1 raises if the cache directory does not exist yet
+os.makedirs('./cache', exist_ok=True)
 fastf1.Cache.enable_cache('./cache')
 mpl.rcParams['font.family'] = 'sans-serif'
 mpl.rcParams['figure.facecolor'] = '#0a0a12'
@@ -47,7 +49,7 @@ def analyze_degradation(session, driver_code):
     Analyze tire degradation for each stint and fit degradation curves.
     Returns stint data with fitted models.
     """
-    laps = session.laps.pick_driver(driver_code).pick_quicklaps(1.1)
+    laps = session.laps.pick_drivers(driver_code).pick_quicklaps(1.1)
 
     if laps.empty:
         print(f"No quick laps found for {driver_code}")

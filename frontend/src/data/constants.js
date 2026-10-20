@@ -1,77 +1,90 @@
-// F1 Team colors and metadata
-export const TEAM_COLORS = {
-  'red_bull': '#3671C6',
-  'ferrari': '#E8002D',
-  'mercedes': '#27F4D2',
-  'mclaren': '#FF8000',
-  'aston_martin': '#358C75',
-  'alpine': '#FF87BC',
-  'williams': '#1868DB',
-  'haas': '#B6BABD',
-  'rb': '#6692FF',
-  'sauber': '#52E252',
-  // Legacy names for API compatibility
-  'Red Bull': '#3671C6',
-  'Ferrari': '#E8002D',
-  'Mercedes': '#27F4D2',
-  'McLaren': '#FF8000',
-  'Aston Martin': '#358C75',
-  'Alpine F1 Team': '#FF87BC',
-  'Williams': '#1868DB',
-  'Haas F1 Team': '#B6BABD',
-  'RB F1 Team': '#6692FF',
-  'Kick Sauber': '#52E252',
+// F1 team colours and metadata.
+//
+// Keys are normalised (lowercase, alphanumerics only) so the same table serves
+// Jolpica constructorIds ("red_bull"), Jolpica names ("Red Bull"), and OpenF1
+// team names ("Red Bull Racing"). Order matters: more specific aliases come
+// first so "Racing Bulls" is not swallowed by a looser match.
+const TEAM_COLOR_ALIASES = [
+  ['racingbulls', '#6692FF'],
+  ['rbf1team', '#6692FF'],
+  ['visacashapprb', '#6692FF'],
+  ['alphatauri', '#5E8FAA'],
+  ['tororosso', '#469BFF'],
+  ['redbull', '#3671C6'],
+  ['ferrari', '#E8002D'],
+  ['mercedes', '#27F4D2'],
+  ['mclaren', '#FF8000'],
+  ['astonmartin', '#229971'],
+  ['alpine', '#FF87BC'],
+  ['williams', '#1868DB'],
+  ['haas', '#B6BABD'],
+  ['audi', '#F50537'],
+  ['cadillac', '#C9A227'],
+  ['sauber', '#52E252'],
+  ['alfaromeo', '#B12039'],
+  ['renault', '#FFF500'],
+  ['racingpoint', '#F596C8'],
+  ['forceindia', '#F596C8'],
+];
+
+// Jolpica constructorIds that don't contain the brand name.
+const CONSTRUCTOR_ID_ALIASES = {
+  rb: 'racingbulls',
 };
+
+const normalise = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+export const FALLBACK_COLOR = '#888888';
+
+/**
+ * Resolve a team colour from any team identifier (constructorId, Jolpica name,
+ * or OpenF1 team_name).
+ */
+export function getTeamColor(team) {
+  if (!team) return FALLBACK_COLOR;
+  const key = CONSTRUCTOR_ID_ALIASES[team] || normalise(team);
+  const hit = TEAM_COLOR_ALIASES.find(([alias]) => key.includes(alias));
+  return hit ? hit[1] : FALLBACK_COLOR;
+}
+
+/**
+ * OpenF1 returns team_colour as a bare hex string ("3671C6"). Prefer it when
+ * present (it is the official colour for that exact session) and fall back to
+ * the name lookup otherwise.
+ */
+export function getOpenF1DriverColor(driver) {
+  if (!driver) return FALLBACK_COLOR;
+  if (driver.team_colour && /^[0-9a-f]{6}$/i.test(driver.team_colour)) {
+    return `#${driver.team_colour}`;
+  }
+  return getTeamColor(driver.team_name);
+}
+
+/**
+ * Teammates share a team colour, which makes two-driver charts unreadable.
+ * Return a contrasting colour for the second driver when that happens.
+ */
+export function distinctColor(color, against, alt = '#A855F7') {
+  if (!color || !against) return color;
+  return color.toLowerCase() === against.toLowerCase() ? alt : color;
+}
+
+/**
+ * A driver who changed teams mid-season has several entries in Jolpica's
+ * Constructors array; the last one is the current team.
+ */
+export function currentConstructor(standing) {
+  const list = standing?.Constructors || [];
+  return list[list.length - 1];
+}
 
 export const TIRE_COMPOUNDS = {
-  SOFT: { color: '#FF3333', label: 'Soft', degradation: 0.08 },
-  MEDIUM: { color: '#FFD700', label: 'Medium', degradation: 0.05 },
-  HARD: { color: '#A0A0A0', label: 'Hard', degradation: 0.03 },
-  INTERMEDIATE: { color: '#43B02A', label: 'Inter', degradation: 0.04 },
-  WET: { color: '#0067AD', label: 'Wet', degradation: 0.02 },
+  SOFT: { color: '#FF3333', label: 'Soft' },
+  MEDIUM: { color: '#FFD700', label: 'Medium' },
+  // Mid grey rather than white so it stays visible in light mode
+  HARD: { color: '#A0A0A0', label: 'Hard' },
+  INTERMEDIATE: { color: '#43B02A', label: 'Inter' },
+  WET: { color: '#0067AD', label: 'Wet' },
 };
 
-export const FLAG_COLORS = {
-  GREEN: '#00FF00',
-  YELLOW: '#FFD700',
-  RED: '#FF0000',
-  CHEQUERED: '#FFFFFF',
-  VSC: '#FFD700',
-  SC: '#FFD700',
-};
-
-// Map driver numbers to team colors (2025 grid)
-export const DRIVER_NUMBER_TO_COLOR = {
-  1: '#3671C6',   // Verstappen - Red Bull
-  11: '#3671C6',  // Perez - Red Bull
-  44: '#E8002D',  // Hamilton - Ferrari
-  16: '#E8002D',  // Leclerc - Ferrari
-  63: '#27F4D2',  // Russell - Mercedes
-  12: '#27F4D2',  // Antonelli - Mercedes
-  4: '#FF8000',   // Norris - McLaren
-  81: '#FF8000',  // Piastri - McLaren
-  14: '#358C75',  // Alonso - Aston Martin
-  18: '#358C75',  // Stroll - Aston Martin
-  10: '#FF87BC',  // Gasly - Alpine
-  31: '#FF87BC',  // Ocon - Alpine (check current)
-  55: '#1868DB',  // Sainz - Williams
-  23: '#1868DB',  // Albon - Williams
-  20: '#B6BABD',  // Magnussen - Haas
-  27: '#B6BABD',  // Hulkenberg - Haas
-  22: '#6692FF',  // Tsunoda - RB
-  30: '#6692FF',  // Lawson - RB
-  77: '#52E252',  // Bottas - Sauber
-  24: '#52E252',  // Zhou - Sauber
-};
-
-export function getTeamColor(teamName) {
-  if (!teamName) return '#888888';
-  const key = Object.keys(TEAM_COLORS).find(
-    k => teamName.toLowerCase().includes(k.toLowerCase())
-  );
-  return key ? TEAM_COLORS[key] : '#888888';
-}
-
-export function getDriverColor(driverNumber) {
-  return DRIVER_NUMBER_TO_COLOR[driverNumber] || '#888888';
-}
+export const DRY_COMPOUNDS = ['SOFT', 'MEDIUM', 'HARD'];

@@ -33,6 +33,15 @@ const NATIONALITY_TO_CODE = {
   India:          'IN', Poland:         'PL', Belgium:        'BE',
   Sweden:         'SE', Ireland:        'IE', Portugal:       'PT',
   Russia:         'RU', Indonesia:      'ID',
+
+  // Three-letter codes (OpenF1 `country_code` uses IOC-style codes)
+  GBR: 'GB', NED: 'NL', MON: 'MC', ESP: 'ES', GER: 'DE', AUS: 'AU',
+  MEX: 'MX', CAN: 'CA', FRA: 'FR', FIN: 'FI', JPN: 'JP', CHN: 'CN',
+  THA: 'TH', DEN: 'DK', ITA: 'IT', SUI: 'CH', AUT: 'AT', BRA: 'BR',
+  ARG: 'AR', NZL: 'NZ', RSA: 'ZA', BEL: 'BE', SWE: 'SE', POL: 'PL',
+  POR: 'PT', IND: 'IN', COL: 'CO', VEN: 'VE', IRL: 'IE', RUS: 'RU',
+  INA: 'ID', IDN: 'ID', CHE: 'CH', DEU: 'DE', NLD: 'NL', MCO: 'MC',
+  DNK: 'DK', ZAF: 'ZA',
 };
 
 /**

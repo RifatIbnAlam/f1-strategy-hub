@@ -1,137 +1,89 @@
 # F1 Strategy Hub
 
-[F1 Strategy Hub](https://rifatibnalam.github.io/f1-strategy-hub/) is a Formula 1 analytics project that combines a live React dashboard with Python-based motorsport analysis workflows. It brings together real-world telemetry, historical race results, championship data, and strategy modeling in one place.
+[**Live site →**](https://rifatibnalam.github.io/f1-strategy-hub/)
+
+F1 Strategy Hub is a Formula 1 analytics app built on real timing data. It pairs a React dashboard (live standings, telemetry, race analysis) with a lap-by-lap race strategy model, plus Python scripts for deeper FastF1 analysis.
 
 ## Highlights
 
-- Live driver and constructor standings, race calendar, and results
-- Interactive race strategy simulator with tire compounds, stint planning, and degradation modeling
-- Driver comparison views with head-to-head stats and visual breakdowns
-- Telemetry exploration powered by OpenF1 session data
-- Historical championship views covering drivers and constructors
-- Python analysis scripts for telemetry, qualifying trends, and race pace modeling
+- **Strategy optimiser.** Exhaustively searches every legal 1- and 2-stop plan (~30k candidates, memoised stint costs) and ranks the fastest. Any result can be loaded into the side-by-side simulator.
+- **Explainable lap-time model.** Compound pace offsets, linear wear plus a compound-specific performance cliff, fuel burn, track evolution and per-circuit pit loss. The model enforces race distance and the two-compound rule.
+- **Real car telemetry.** Speed, throttle, brake and gear traces for any lap, with distance integrated from OpenF1's ~3.7 Hz `car_data`, plus synced cursors across channels.
+- **Real tyre degradation.** Per-stint least-squares fits with outlier filtering, true tyre age (including used sets), and fuel-corrected degradation rates.
+- **Undercut/overcut detection.** On-track gaps come from line-crossing timestamps rather than summed lap times, so a missing lap can't skew the result.
+- **Live championship.** Standings, calendar with a next-race countdown, last result. Head-to-head driver comparison includes sprint points, the actual starting grid and correct DNF classification.
+- **Race position flow.** Lap-by-lap bump chart sized to the field (22 cars from 2026), with pit-lane starts handled.
+- **Championship history.** Every title since 1950, dynasty streaks, eras and verified records.
+
+## Engineering notes
+
+- **Data correctness.** Team colours resolve from Jolpica ids, Jolpica names or OpenF1 names (2026 grid, including Audi and Cadillac) and prefer OpenF1's official `team_colour`. Mid-season transfers use the driver's latest team. Teammates get a contrasting colour in two-driver charts.
+- **Resilient data layer.** In-memory caching with TTLs, exponential back-off on HTTP 429 for both APIs, and a `useApi` hook that drops stale responses and clears data when a selection is reset.
+- **Robust UI.** An error boundary per view, hash routing for shareable links (`#/strategy`) that works on GitHub Pages, and safe `localStorage` access.
+- **Tests.** Jest unit tests cover the strategy model and optimiser, telemetry distance integration, gap computation, colour and flag lookups. They run in CI before every deploy.
 
 ## Stack
 
-- Frontend: React 18, Axios, Recharts, Lucide React
-- Analysis: Python 3.10+, FastF1, Pandas, NumPy, Matplotlib, SciPy, scikit-learn
-- Data sources: OpenF1 API, Jolpica F1 API, FastF1
+- Frontend: React 18, Recharts, Lucide React
+- Analysis: Python 3.10+, FastF1, Pandas, NumPy, Matplotlib, SciPy
+- Data: [OpenF1](https://openf1.org) (2023+, sessions, laps, stints, car telemetry), [Jolpica F1](https://github.com/jolpica/jolpica-f1) (1950+, results, standings, schedules, lap positions), [FastF1](https://docs.fastf1.dev) (Python)
 
-## Project Structure
+## Project structure
 
 ```text
 f1-strategy-hub/
-├── frontend/               # React application
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── data/
-│   │   ├── hooks/
-│   │   └── services/
-│   └── package.json
-├── analysis/               # Python analysis scripts
-│   ├── scripts/
+├── frontend/
+│   └── src/
+│       ├── components/   # One component per view, plus shared widgets
+│       ├── models/       # Strategy model + optimiser (pure, unit-tested)
+│       ├── services/     # OpenF1 and Jolpica API clients
+│       ├── hooks/        # useApi
+│       └── data/         # Team colours, flags, championship history
+├── analysis/
+│   ├── scripts/          # FastF1 telemetry, race pace, qualifying gap scripts
 │   └── requirements.txt
-├── docs/
-└── README.md
+└── .github/workflows/    # Test + build + deploy to GitHub Pages
 ```
 
-## Frontend Features
+## Strategy model
 
-### Live Dashboard
+```
+lapTime = basePace + compoundOffset + degRate × tyreAge + cliffPenalty
+        + fuelEffect × fuelOnBoard + trackEvolution × (lap − 1)
+```
 
-Tracks current driver and constructor standings, recent results, and season schedule data using the Jolpica F1 API.
+Each pit stop adds the circuit's pit-lane loss. Parameters are representative values tuned to published Pirelli/FIA ranges, not team data. The point is to reproduce real trade-offs: medium→hard one-stops at Monza and Silverstone, two-stops at high-degradation tracks. The model ignores traffic and overtaking difficulty, so it will happily recommend a Monaco two-stop that track position would never allow.
 
-### Strategy Simulator
-
-Models stint planning and lap-time evolution across different tire compounds and degradation assumptions. It is designed to compare strategies side by side and make tradeoffs easy to inspect visually.
-
-### Driver Comparison
-
-Compares drivers across wins, points, results trends, and broader performance indicators for quick season-level benchmarking.
-
-### Telemetry Viewer
-
-Surfaces OpenF1 telemetry and lap-level session data so you can inspect pace progression, sector splits, and tire usage trends.
-
-### Championship History
-
-Summarizes F1 title history with visual breakdowns for champions, constructors, and nationality-level trends.
-
-## Analysis Scripts
-
-### `telemetry_analysis.py`
-
-FastF1-powered analysis for speed traces, lap distributions, and strategy-oriented telemetry views.
-
-### `race_pace_model.py`
-
-Fits degradation behavior and explores race pace patterns to estimate stint behavior and pit-window tradeoffs.
-
-### `qualifying_gap_analysis.py`
-
-Measures teammate qualifying gaps and season trendlines to compare one-lap performance over time.
-
-## Data Sources
-
-| Source | Coverage | Notes |
-| --- | --- | --- |
-| [OpenF1](https://openf1.org) | 2023 onward | Live and recent telemetry-oriented session data |
-| [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) | 1950 onward | Standings, schedules, and historical race results |
-| [FastF1](https://docs.fastf1.dev) | 2018 onward | Detailed telemetry and motorsport session data in Python |
-
-## Getting Started
-
-### Run the frontend
+## Getting started
 
 ```bash
 cd frontend
 npm install
-npm start
+npm start          # http://localhost:3000
+npm test           # unit tests
 ```
 
-The frontend starts on `http://localhost:3000`.
-
-### Run the Python analysis scripts
+Python analysis:
 
 ```bash
 cd analysis
 pip install -r requirements.txt
-```
-
-Example commands:
-
-```bash
-python scripts/telemetry_analysis.py --year 2025 --race "Bahrain" --drivers VER HAM NOR
-python scripts/race_pace_model.py --year 2025 --race "Bahrain" --driver VER
+python scripts/telemetry_analysis.py --year 2025 --race "Monza" --drivers NOR PIA LEC
+python scripts/race_pace_model.py --year 2025 --race "Monza" --driver NOR
 python scripts/qualifying_gap_analysis.py --year 2025 --races 10
 ```
 
+Figures are written to `docs/images/`, and FastF1 caches data in `analysis/cache/`.
+
 ## Deployment
 
-The React app includes a `deploy` script for GitHub Pages:
-
-```bash
-cd frontend
-npm run deploy
-```
-
-If you publish this through GitHub Pages, update the `homepage` field in [frontend/package.json](/Users/rifatibnalam/Library/Application%20Support/Claude/local-agent-mode-sessions/94ce2974-3f1d-4155-8c09-5e1a017c6428/2dda3153-fa5a-4593-8f58-6164569512b4/local_ba83b7f1-66cc-4ae4-a252-174bdf289836/outputs/f1-strategy-hub/frontend/package.json:1) to the final site URL before deploying.
+Pushing to `main` runs the tests, builds the app and deploys it to GitHub Pages via `.github/workflows/deploy-pages.yml`. Pull requests run the tests and the build without deploying.
 
 ## Notes
 
-- API-backed views depend on third-party service availability and rate limits.
-- FastF1 may cache data locally after the first run for faster repeat analysis.
-- `frontend/node_modules` is intentionally excluded from version control.
-
-## Roadmap Ideas
-
-- Weather-adjusted strategy analysis
-- Pit stop performance benchmarking
-- Era-adjusted historical comparisons
-- ML-assisted lap-time or stint prediction
-- Expanded live session tracking
+- API-backed views depend on OpenF1 and Jolpica availability and rate limits. OpenF1 data starts in 2023.
+- OpenF1 telemetry is sampled at ~3.7 Hz, so traces are smoother than team data and integrated distance can drift slightly from the official lap length.
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](/Users/rifatibnalam/Library/Application%20Support/Claude/local-agent-mode-sessions/94ce2974-3f1d-4155-8c09-5e1a017c6428/2dda3153-fa5a-4593-8f58-6164569512b4/local_ba83b7f1-66cc-4ae4-a252-174bdf289836/outputs/f1-strategy-hub/LICENSE:1).
+MIT. See [LICENSE](LICENSE).

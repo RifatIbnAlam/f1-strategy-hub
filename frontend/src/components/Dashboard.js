@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApi } from '../hooks/useApi';
 import { getDriverStandings, getConstructorStandings, getSchedule, getLastRaceResult } from '../services/jolpica';
 import { getLatestSession } from '../services/openf1';
-import { getTeamColor } from '../data/constants';
-import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle } from 'lucide-react';
+import { getTeamColor, currentConstructor } from '../data/constants';
+import { Trophy, Flag, Users, Calendar, TrendingUp, Loader, AlertCircle, Clock } from 'lucide-react';
 import { getFlag } from '../data/flags';
 import TeamBadge from './TeamBadge';
 
@@ -117,7 +117,37 @@ const parseLocalDate = (iso) => {
   return new Date(y, m - 1, d);
 };
 
-const RaceItem = ({ race, isPast }) => {
+// Race start as an absolute instant. Jolpica gives date + UTC time ("13:00:00Z");
+// fall back to local midnight when the time is not published yet.
+const raceStart = (race) => {
+  if (!race?.date) return null;
+  if (race.time) return new Date(`${race.date}T${race.time}`);
+  return parseLocalDate(race.date);
+};
+
+// Treat a race as finished ~2.5h after lights out, so it isn't greyed out
+// while it is still running.
+const RACE_DURATION_MS = 2.5 * 60 * 60 * 1000;
+
+function useNow(intervalMs) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+function formatCountdown(ms) {
+  if (ms <= 0) return 'Live now';
+  const mins = Math.floor(ms / 60000);
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
+  const m = mins % 60;
+  return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`;
+}
+
+const RaceItem = ({ race, isPast, isNext }) => {
   const date = parseLocalDate(race.date);
   const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
   return (
@@ -126,6 +156,8 @@ const RaceItem = ({ race, isPast }) => {
       padding: '8px 12px',
       opacity: isPast ? 0.7 : 1,
       borderRadius: 6,
+      background: isNext ? 'var(--accent-soft)' : 'transparent',
+      border: isNext ? '1px solid var(--accent-border)' : '1px solid transparent',
     }}>
       <div style={{
         width: 44, height: 44,
@@ -156,7 +188,7 @@ const RaceItem = ({ race, isPast }) => {
         background: isPast ? 'var(--app-bg-alt)' : 'var(--accent-soft)',
         color: isPast ? 'var(--text-muted)' : 'var(--accent)',
       }}>
-        R{race.round}
+        {isNext ? 'NEXT' : `R${race.round}`}
       </span>
     </div>
   );
@@ -164,7 +196,6 @@ const RaceItem = ({ race, isPast }) => {
 
 /* ─── Dashboard Component ──────────────────────────────────────────────────── */
 export default function Dashboard() {
-  const currentYear = new Date().getFullYear();
 
   const { data: driverStandings, loading: driversLoading, error: driversError } =
     useApi(() => getDriverStandings('current'), []);
@@ -181,10 +212,22 @@ export default function Dashboard() {
   const { data: latestSession } =
     useApi(() => getLatestSession(), []);
 
-  const today = new Date();
+  const now = useNow(30000);
+
+  // Season label comes from the API ("current" rolls over when the new
+  // season's calendar is published), not from the browser clock.
+  const season = schedule?.[0]?.season || lastRace?.season || new Date().getFullYear();
+
+  const nextRace = useMemo(
+    () => schedule?.find(r => raceStart(r) && raceStart(r).getTime() + RACE_DURATION_MS > now),
+    [schedule, now]
+  );
 
   const leader = driverStandings?.[0];
   const topConstructor = constructorStandings?.[0];
+  const gapToSecond = driverStandings?.[1]
+    ? parseFloat(leader.points) - parseFloat(driverStandings[1].points)
+    : null;
 
   return (
     <div>
@@ -200,7 +243,7 @@ export default function Dashboard() {
           F1 Analytics Dashboard
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
-          Live data from the {currentYear} Formula 1 World Championship
+          Live data from the {season} Formula 1 World Championship
         </p>
         {latestSession && (
           <div style={{
@@ -231,7 +274,7 @@ export default function Dashboard() {
           icon={Trophy}
           label="Championship Leader"
           value={leader ? `${leader.Driver?.givenName?.[0]}. ${leader.Driver?.familyName}` : '...'}
-          sub={leader ? `${leader.points} pts` : ''}
+          sub={leader ? `${leader.points} pts${gapToSecond != null ? ` · +${gapToSecond} over P2` : ''}` : ''}
           color="#FFD700"
         />
         <StatCard
@@ -249,16 +292,18 @@ export default function Dashboard() {
           color="#27F4D2"
         />
         <StatCard
-          icon={Calendar}
-          label="Season"
-          value={currentYear}
-          sub="Formula 1 World Championship"
+          icon={Clock}
+          label={nextRace ? 'Next Race' : 'Season'}
+          value={nextRace ? formatCountdown(raceStart(nextRace).getTime() - now) : (schedule ? 'Complete' : '...')}
+          sub={nextRace
+            ? `${nextRace.raceName} · ${raceStart(nextRace).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+            : `${season} Formula 1 World Championship`}
           color="#FF8000"
         />
       </div>
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>
         {/* Driver Standings */}
         <Card glow>
           <SectionTitle icon={TrendingUp} title="Driver Standings" subtitle="Live championship points" />
@@ -266,14 +311,14 @@ export default function Dashboard() {
           {driversError && <ErrorMessage message={driversError} />}
           {driverStandings && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 440, overflowY: 'auto' }}>
-              {driverStandings.slice(0, 20).map((d, i) => (
+              {driverStandings.map((d, i) => (
                 <StandingRow
                   key={d.Driver?.driverId}
-                  position={i + 1}
+                  position={d.position || i + 1}
                   name={`${d.Driver?.givenName} ${d.Driver?.familyName}`}
-                  team={d.Constructors?.[0]?.name}
+                  team={currentConstructor(d)?.name}
                   points={d.points}
-                  color={getTeamColor(d.Constructors?.[0]?.name)}
+                  color={getTeamColor(currentConstructor(d)?.constructorId)}
                   isFirst={i === 0}
                   nationality={d.Driver?.nationality}
                 />
@@ -284,7 +329,7 @@ export default function Dashboard() {
 
         {/* Race Calendar */}
         <Card>
-          <SectionTitle icon={Calendar} title="Race Calendar" subtitle={`${currentYear} schedule`} />
+          <SectionTitle icon={Calendar} title="Race Calendar" subtitle={`${season} schedule · times in your timezone`} />
           {schedLoading && <LoadingSpinner />}
           {schedule && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 440, overflowY: 'auto' }}>
@@ -292,7 +337,8 @@ export default function Dashboard() {
                 <RaceItem
                   key={race.round}
                   race={race}
-                  isPast={parseLocalDate(race.date) < today}
+                  isPast={raceStart(race) && raceStart(race).getTime() + RACE_DURATION_MS <= now}
+                  isNext={race === nextRace}
                 />
               ))}
             </div>
@@ -306,7 +352,7 @@ export default function Dashboard() {
           {constructorStandings && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {constructorStandings.map((c, i) => {
-                const color = getTeamColor(c.Constructor?.name);
+                const color = getTeamColor(c.Constructor?.constructorId);
                 const maxPoints = parseFloat(constructorStandings[0]?.points) || 1;
                 const pct = (parseFloat(c.points) / maxPoints) * 100;
                 return (
@@ -318,7 +364,7 @@ export default function Dashboard() {
                       fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', width: 24,
                       fontFamily: "'JetBrains Mono', monospace",
                     }}>
-                      {i + 1}
+                      {c.position || i + 1}
                     </span>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>

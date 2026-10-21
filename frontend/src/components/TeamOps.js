@@ -20,7 +20,7 @@ const Card = ({ children, style }) => (
   }}>{children}</div>
 );
 
-const Headline = ({ icon: Icon, label, team, value, sub }) => (
+const Headline = ({ icon: Icon, label, team, value, sub, loading }) => (
   <Card style={{ padding: 18 }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
       <Icon size={16} color="var(--accent)" />
@@ -35,7 +35,9 @@ const Headline = ({ icon: Icon, label, team, value, sub }) => (
         <div style={{ fontSize: 20, fontWeight: 800, color: tone(getTeamColor(team.teamId)), marginTop: 4, ...mono }}>{value}</div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>
       </>
-    ) : <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Not enough data yet</div>}
+    ) : (
+      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{loading ? 'Loading pit stops…' : 'Not enough data yet'}</div>
+    )}
   </Card>
 );
 
@@ -152,9 +154,9 @@ export default function TeamOps() {
           {/* Headlines */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 16, marginBottom: 24 }}>
             <Headline icon={Timer} label="Fastest pit crew" team={headlines.fastest}
-              value={headlines.fastest && `${signed(headlines.fastest.pitMedian)}s`} sub="median stop vs race median" />
+              value={headlines.fastest && `${signed(headlines.fastest.pitMedian)}s`} sub="median stop vs race median" loading={stopsLoading} />
             <Headline icon={Gauge} label="Most consistent crew" team={headlines.consistent}
-              value={headlines.consistent && `${headlines.consistent.pitIQR.toFixed(2)}s`} sub="spread between typical good and bad stops" />
+              value={headlines.consistent && `${headlines.consistent.pitIQR.toFixed(2)}s`} sub="spread between typical good and bad stops" loading={stopsLoading} />
             <Headline icon={ShieldCheck} label="Most reliable" team={headlines.reliable}
               value={headlines.reliable && pct(headlines.reliable.dnfRate)} sub="of starts not classified" />
             <Headline icon={TrendingUp} label="Best race-day gains" team={headlines.racer}

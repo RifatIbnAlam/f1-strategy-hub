@@ -137,10 +137,11 @@ async function check(name, fn) {
 
   await check('team ops scorecard ranks pit crews and excludes penalties', async () => {
     await go('ops');
-    await page.getByText('Fastest pit crew').waitFor();
-    const headline = await page.getByText('Fastest pit crew').locator('xpath=ancestor::div[contains(@style,"border-radius: 12px")][1]').innerText();
-    assert(headline.includes('Mercedes'), `fastest crew card: ${headline}`);
+    // Results render before the season's pit stops finish loading; wait for
+    // the pit data rather than reading the card mid-load.
     await page.getByText(/1 penalty or repair excluded/).waitFor();
+    const fastest = page.getByText('Fastest pit crew').locator('xpath=ancestor::div[contains(@style,"border-radius: 12px")][1]');
+    await fastest.getByText('Mercedes').waitFor();
   });
 
   await check('championship history renders', async () => {

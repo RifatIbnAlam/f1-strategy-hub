@@ -22,6 +22,7 @@ const BASE = `${ORIGIN}/f1-strategy-hub/`;
 const TYPES = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.json': 'application/json' };
 
 let apiDown = false;
+let failPitRound = null; // e.g. '2': that round's pit stops return HTTP 429 and the snapshot is hidden
 const failures = [];
 
 async function check(name, fn) {
@@ -43,12 +44,20 @@ async function check(name, fn) {
   await page.route('**/*', async route => {
     const url = route.request().url();
     const body = mockBody(url);
+    if (body != null && failPitRound && url.includes(`/${failPitRound}/pitstops`)) {
+      return route.fulfill({ status: 429, body: 'rate limited' });
+    }
     if (body != null) {
       return apiDown
         ? route.fulfill({ status: 503, body: 'unavailable' })
         : route.fulfill({ contentType: 'application/json', body });
     }
     const u = new URL(url);
+    // With a pit round failing, also hide the snapshot so the round is truly
+    // unavailable (otherwise the offline fallback would serve it).
+    if (u.origin === ORIGIN && failPitRound && u.pathname.includes('/snapshot/')) {
+      return route.fulfill({ status: 404, body: '' });
+    }
     if (u.origin === ORIGIN) {
       let file = u.pathname.replace('/f1-strategy-hub', '') || '/';
       if (file === '/') file = '/index.html';
@@ -83,6 +92,13 @@ async function check(name, fn) {
     await go('strategy');
     await page.getByText('Optimal Strategies').waitFor();
     await page.getByText(/beats Strategy B in \d+(\.\d)?% of races/).waitFor();
+  });
+
+  await check('strategy brief generates a recommendation with contingency and sensitivity', async () => {
+    await page.getByRole('button', { name: 'Generate brief' }).click();
+    for (const heading of ['RECOMMENDATION', 'In-race contingency', 'What would change the call', 'Assumptions']) {
+      await page.getByText(heading, { exact: false }).first().waitFor();
+    }
   });
 
   await check('calibration fits a real race and beats the baseline out of sample', async () => {
@@ -128,6 +144,30 @@ async function check(name, fn) {
     await page.getByText(/Race Gap/).waitFor();
   });
 
+  await check('team ops scorecard ranks pit crews and excludes penalties', async () => {
+    await go('ops');
+    // Results render before the season's pit stops finish loading; wait for
+    // the pit data rather than reading the card mid-load.
+    await page.getByText(/1 penalty or repair excluded/).waitFor();
+    const fastest = page.getByText('Fastest pit crew').locator('xpath=ancestor::div[contains(@style,"border-radius: 12px")][1]');
+    await fastest.getByText('Mercedes').waitFor();
+  });
+
+  await check('team ops reports rounds whose pit data failed to load', async () => {
+    failPitRound = '2';
+    try {
+      // Same URL as the previous check: force a full reload so the in-memory
+      // API cache doesn't still hold round 2.
+      await go('ops');
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.getByText(/Pit data unavailable for round 2/).waitFor();
+      await page.getByText('Fastest pit crew').waitFor();
+    } finally {
+      failPitRound = null;
+    }
+  });
+
   await check('championship history renders', async () => {
     await go('history');
     await page.getByText('Records & Milestones').waitFor();
@@ -157,7 +197,7 @@ async function check(name, fn) {
 
   console.log('Mobile layout');
   await page.setViewportSize({ width: 375, height: 800 });
-  for (const view of ['', 'strategy', 'comparison', 'telemetry', 'raceflow', 'undercut', 'history']) {
+  for (const view of ['', 'strategy', 'comparison', 'telemetry', 'raceflow', 'undercut', 'ops', 'history']) {
     await check(`no horizontal scroll at 375px: ${view || 'dashboard'}`, async () => {
       await go(view);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

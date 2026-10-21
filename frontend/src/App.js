@@ -6,6 +6,7 @@ import TelemetryViewer from './components/TelemetryViewer';
 import ChampionshipHistory from './components/ChampionshipHistory';
 import RaceFlow from './components/RaceFlow';
 import UndercutAnalyzer from './components/UndercutAnalyzer';
+import TeamOps from './components/TeamOps';
 import ErrorBoundary from './components/ErrorBoundary';
 import SnapshotBanner from './components/SnapshotBanner';
 import {
@@ -16,6 +17,7 @@ import {
   Trophy,
   TrendingUp,
   ArrowDownUp,
+  Wrench,
   Github,
   Menu,
   Moon,
@@ -99,6 +101,13 @@ const globalStyles = `
   ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
   ::selection { background: var(--accent); color: #fff; }
 
+  /* Printing a strategy brief: only the brief, in dark-on-white. */
+  @media print {
+    body * { visibility: hidden; }
+    .print-area, .print-area * { visibility: visible; color: #111 !important; }
+    .print-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; background: #fff !important; box-shadow: none !important; }
+    .no-print { display: none !important; }
+  }
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -200,6 +209,7 @@ const VIEWS = [
   { id: 'telemetry', label: 'Telemetry', icon: Activity },
   { id: 'raceflow', label: 'Race Flow', icon: TrendingUp },
   { id: 'undercut', label: 'Pit Battles', icon: ArrowDownUp },
+  { id: 'ops', label: 'Team Ops', icon: Wrench },
   { id: 'history', label: 'Championships', icon: Trophy },
 ];
 
@@ -278,6 +288,7 @@ export default function App() {
       case 'telemetry': return <TelemetryViewer />;
       case 'raceflow': return <RaceFlow />;
       case 'undercut': return <UndercutAnalyzer />;
+      case 'ops': return <TeamOps />;
       case 'history': return <ChampionshipHistory />;
       default: return <Dashboard />;
     }

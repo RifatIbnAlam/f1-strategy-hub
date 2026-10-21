@@ -16,6 +16,7 @@ import {
 import RealTireData from './RealTireData';
 import ModelCalibration from './ModelCalibration';
 import MonteCarloPanel from './MonteCarloPanel';
+import StrategyBrief from './StrategyBrief';
 import { toneLegend } from './chartUtils';
 
 /* ─── Card Primitive ──────────────────────────────────────────────────────── */
@@ -472,6 +473,8 @@ export default function StrategySimulator() {
         strategies={simData}
         optimal={optimal.slice(0, 4)}
       />
+
+      <StrategyBrief circuit={circuit} options={options} userPlans={simData} optimal={optimal} />
 
       {/* Charts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 24 }}>

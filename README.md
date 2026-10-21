@@ -13,11 +13,12 @@ Undercut pairs a lap-by-lap race strategy model with live data from every sessio
 | Page | What it does |
 | --- | --- |
 | **Dashboard** | Live driver and constructor standings, next-race countdown, calendar in your timezone, last race result |
-| **Strategy Sim** | Lap-time model, exhaustive 1-/2-stop optimiser, safety-car Monte Carlo, calibration and backtest on real races, real tyre-degradation fits |
+| **Strategy Sim** | Lap-time model, exhaustive 1-/2-stop optimiser, safety-car Monte Carlo, one-click strategy brief, calibration and backtest on real races, real tyre-degradation fits |
 | **Driver Compare** | Head-to-head points progression (including sprints), race-by-race deltas, result distribution, grid vs finish |
 | **Telemetry** | Lap and sector times, tyre stints, and speed/throttle/brake/gear traces for any lap; sector-by-sector driver comparison |
 | **Race Flow** | Lap-by-lap position chart for races from recent seasons, with positions gained |
 | **Pit Battles** | Detects undercuts and overcuts between two drivers from line-crossing timestamps |
+| **Team Ops** | Season operations scorecard: circuit-normalised pit-crew speed and consistency, reliability, race-day gains, and the time each team lost to inconsistent stops |
 | **Championships** | Every title since 1950: dynasty timeline, eras, nationalities, verified records |
 
 ## Highlights
@@ -31,12 +32,21 @@ Undercut pairs a lap-by-lap race strategy model with live data from every sessio
   - 2,000 simulated races with Poisson-distributed safety cars and an optional "pit under SC" policy.
   - Common random numbers across strategies, so comparisons reflect the plans, not luck.
   - Reports expected race time, P10–P90 spread and win probability, and flags when uncertainty changes the best choice.
+- **Strategy brief.**
+  - One click turns the simulator into a decision-ready, one-page recommendation: the call and expected outcome, why, an in-race safety-car contingency ("box if an SC appears on laps 16–23"), a sensitivity analysis of what would change the call, and the assumptions.
+  - Exports as Markdown or prints to PDF.
+- **Team operations scorecard.**
+  - Pit-lane times vary by circuit far more than between crews, so every stop is scored against its own race's median.
+  - Penalties and repairs are separated out.
+  - KPIs per team: execution speed, consistency (IQR), slow-stop rate, DNF rate and race-day gains, plus an "inconsistency cost" in seconds: what a team would have saved by repeating its typical stop every time.
 - **Strategy optimiser.** Searches every legal 1- and 2-stop plan (~30k candidates, memoised stint costs). It enforces race distance and the two-compound rule.
 - **Real car telemetry.** Distance is integrated from OpenF1's ~3.7 Hz `car_data`, with synced cursors across channels.
 - **Fuel-corrected tyre degradation.** Per-stint fits use true tyre age, including used sets.
 - **Works offline.** CI snapshots live API responses at build time and weekly. If OpenF1 or Jolpica fail, the app serves the saved data and says so. `?demo` forces offline mode for live demos.
 
 ![Monte Carlo](docs/screenshots/monte-carlo.png)
+
+![Strategy brief](docs/screenshots/strategy-brief.png)
 
 ## Strategy model
 
@@ -78,7 +88,7 @@ Each pit stop adds the circuit's pit-lane loss. Default parameters are represent
   - A snapshot fallback recorded by `scripts/snapshot.mjs`, which runs the app's own service modules under Node so the saved URLs match the browser's requests exactly.
 - **Robust UI.** An error boundary per view, hash routing for shareable links (`#/strategy`) that works on GitHub Pages, and safe `localStorage` access.
 - **Tests.**
-  - 41 Jest unit tests: the regression recovers known parameters from a synthetic race, the backtest beats its baseline out of sample, the Monte Carlo is reproducible, plus the strategy model, optimiser and data helpers.
+  - 55 Jest unit tests: the regression recovers known parameters from a synthetic race, the backtest beats its baseline out of sample, the Monte Carlo is reproducible, pit times are normalised across circuits, the brief's recommendation and contingency are consistent, plus the strategy model, optimiser and data helpers.
   - A Playwright end-to-end suite drives every page against deterministic API fixtures. It also checks the API-down fallback, that `?demo` makes zero live requests, and that no page scrolls horizontally at phone width.
   - Unit and e2e tests both gate every deploy.
 
@@ -100,7 +110,7 @@ Each pit stop adds the circuit's pit-lane loss. Default parameters are represent
 │   ├── scripts/          # Build-time API snapshot
 │   └── src/
 │       ├── components/   # One component per page, plus shared widgets
-│       ├── models/       # Strategy model, optimiser, calibration, Monte Carlo (pure, unit-tested)
+│       ├── models/       # Strategy model, optimiser, calibration, Monte Carlo, brief, ops scorecard (pure, unit-tested)
 │       ├── services/     # OpenF1 and Jolpica clients + offline snapshot fallback
 │       ├── hooks/        # useApi
 │       └── data/         # Team colours, flags, championship history

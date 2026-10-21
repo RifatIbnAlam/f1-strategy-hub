@@ -257,11 +257,13 @@ export async function getPitStops(year, round) {
 
 /**
  * Pit stops for several rounds. Requests run a couple at a time to stay
- * under Jolpica's burst limit; a round that fails is skipped, not fatal.
- * Returns [{ round, stops }] in round order.
+ * under Jolpica's burst limit. A round that still fails after retries is
+ * reported in `missing` rather than silently dropped, so the UI can say the
+ * season is incomplete. Returns { rounds: [{ round, stops }], missing: [round] }.
  */
 export async function getSeasonPitStops(year, rounds, concurrency = 2) {
   const out = [];
+  const missing = [];
   const queue = [...rounds];
   const worker = async () => {
     while (queue.length) {
@@ -269,12 +271,15 @@ export async function getSeasonPitStops(year, rounds, concurrency = 2) {
       try {
         out.push({ round: String(round), stops: await getPitStops(year, round) });
       } catch (_) {
-        // Missing data for one race shouldn't hide the rest of the season.
+        missing.push(String(round));
       }
     }
   };
   await Promise.all(Array.from({ length: concurrency }, worker));
-  return out.sort((a, b) => Number(a.round) - Number(b.round));
+  return {
+    rounds: out.sort((a, b) => Number(a.round) - Number(b.round)),
+    missing: missing.sort((a, b) => Number(a) - Number(b)),
+  };
 }
 
 // ─── Season list ──────────────────────────────────────────────────────────────

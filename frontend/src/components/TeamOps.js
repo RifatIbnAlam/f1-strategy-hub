@@ -67,16 +67,16 @@ export default function TeamOps() {
   const { data: sprints } = useApi(() => getSprintResults(year), [year]);
   const rounds = (races || []).map(r => r.round);
   const roundsKey = rounds.join(',');
-  const { data: seasonStops, loading: stopsLoading } = useApi(
+  const { data: pitData, loading: stopsLoading } = useApi(
     () => getSeasonPitStops(year, rounds), [year, roundsKey], rounds.length > 0
   );
 
   const { rows, card, trend, headlines } = useMemo(() => {
     if (!races?.length) return { rows: [], card: [], trend: [], headlines: {} };
-    const pitRows = buildPitStopRows(seasonStops || [], races);
+    const pitRows = buildPitStopRows(pitData?.rounds || [], races);
     const scorecard = teamScorecard(pitRows, races, sprints || []);
     return { rows: pitRows, card: scorecard, trend: pitTrend(pitRows), headlines: headlineFindings(scorecard) };
-  }, [races, sprints, seasonStops]);
+  }, [races, sprints, pitData]);
 
   // One line per team, but two teams can share a colour (e.g. older
   // seasons with unmapped constructors falling back to grey); keep them apart.
@@ -137,6 +137,11 @@ export default function TeamOps() {
           {races && (
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
               {races.length} races · {rows.length} pit stops{anomalies ? ` (${anomalies} penalt${anomalies === 1 ? 'y or repair' : 'ies or repairs'} excluded)` : ''}
+            </span>
+          )}
+          {pitData?.missing?.length > 0 && (
+            <span style={{ fontSize: 12, color: 'var(--warning)' }}>
+              Pit data unavailable for round{pitData.missing.length > 1 ? 's' : ''} {pitData.missing.join(', ')} (API rate limit). Pit metrics cover the remaining races.
             </span>
           )}
           {loading && (

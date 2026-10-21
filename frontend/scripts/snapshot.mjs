@@ -35,7 +35,10 @@ for (const name of ['snapshot', 'openf1', 'jolpica']) {
 // OpenF1's free tier allows a few requests per second with a per-minute cap;
 // Jolpica allows ~4/s. Space requests out per host.
 // SNAPSHOT_NO_THROTTLE=1 disables the spacing for offline runs against mocks.
-const MIN_GAP_MS = process.env.SNAPSHOT_NO_THROTTLE ? {} : { 'api.openf1.org': 2100, 'api.jolpi.ca': 350 };
+// Jolpica's burst bucket drains on a season's worth of pit-stop requests, so
+// pace it well under the advertised 4 req/s to leave headroom for the
+// paginated lap-position pull that follows.
+const MIN_GAP_MS = process.env.SNAPSHOT_NO_THROTTLE ? {} : { 'api.openf1.org': 2100, 'api.jolpi.ca': 800 };
 const lastRequest = {};
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, opts) => {
@@ -84,7 +87,10 @@ if (season) {
 if (season && results?.length) {
   // Team Ops page: every round's pit stops.
   await step(`${season} pit stops (${results.length} rounds)`,
-    () => jolpica.getSeasonPitStops(Number(season), results.map(r => r.round)));
+    async () => {
+      const { missing } = await jolpica.getSeasonPitStops(Number(season), results.map(r => r.round), 1);
+      if (missing.length) throw new Error(`rounds ${missing.join(', ')} failed`);
+    });
 }
 if (lastRace) {
   await step(`R${lastRace.round} results`, () => jolpica.getRaceResults(Number(lastRace.season), lastRace.round));

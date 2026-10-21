@@ -255,6 +255,28 @@ export async function getPitStops(year, round) {
   return data?.RaceTable?.Races?.[0]?.PitStops || [];
 }
 
+/**
+ * Pit stops for several rounds. Requests run a couple at a time to stay
+ * under Jolpica's burst limit; a round that fails is skipped, not fatal.
+ * Returns [{ round, stops }] in round order.
+ */
+export async function getSeasonPitStops(year, rounds, concurrency = 2) {
+  const out = [];
+  const queue = [...rounds];
+  const worker = async () => {
+    while (queue.length) {
+      const round = queue.shift();
+      try {
+        out.push({ round: String(round), stops: await getPitStops(year, round) });
+      } catch (_) {
+        // Missing data for one race shouldn't hide the rest of the season.
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: concurrency }, worker));
+  return out.sort((a, b) => Number(a.round) - Number(b.round));
+}
+
 // ─── Season list ──────────────────────────────────────────────────────────────
 
 /**
@@ -277,6 +299,7 @@ export const jolpica = {
   getConstructors,
   getLapTimes,
   getPitStops,
+  getSeasonPitStops,
   getSeasons,
 };
 

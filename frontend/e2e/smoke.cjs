@@ -85,6 +85,13 @@ async function check(name, fn) {
     await page.getByText(/beats Strategy B in \d+(\.\d)?% of races/).waitFor();
   });
 
+  await check('strategy brief generates a recommendation with contingency and sensitivity', async () => {
+    await page.getByRole('button', { name: 'Generate brief' }).click();
+    for (const heading of ['RECOMMENDATION', 'In-race contingency', 'What would change the call', 'Assumptions']) {
+      await page.getByText(heading, { exact: false }).first().waitFor();
+    }
+  });
+
   await check('calibration fits a real race and beats the baseline out of sample', async () => {
     const panel = card('Calibrate & Backtest on Real Races');
     await panel.locator('select').nth(1).selectOption(String(SESSION));
@@ -128,6 +135,14 @@ async function check(name, fn) {
     await page.getByText(/Race Gap/).waitFor();
   });
 
+  await check('team ops scorecard ranks pit crews and excludes penalties', async () => {
+    await go('ops');
+    await page.getByText('Fastest pit crew').waitFor();
+    const headline = await page.getByText('Fastest pit crew').locator('xpath=ancestor::div[contains(@style,"border-radius: 12px")][1]').innerText();
+    assert(headline.includes('Mercedes'), `fastest crew card: ${headline}`);
+    await page.getByText(/1 penalty or repair excluded/).waitFor();
+  });
+
   await check('championship history renders', async () => {
     await go('history');
     await page.getByText('Records & Milestones').waitFor();
@@ -157,7 +172,7 @@ async function check(name, fn) {
 
   console.log('Mobile layout');
   await page.setViewportSize({ width: 375, height: 800 });
-  for (const view of ['', 'strategy', 'comparison', 'telemetry', 'raceflow', 'undercut', 'history']) {
+  for (const view of ['', 'strategy', 'comparison', 'telemetry', 'raceflow', 'undercut', 'ops', 'history']) {
     await check(`no horizontal scroll at 375px: ${view || 'dashboard'}`, async () => {
       await go(view);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

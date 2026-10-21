@@ -68,6 +68,17 @@ function jolpica(u) {
       position: String(i + 1), positionText: String(i + 1), points: String([8, 7, 6, 5][i]), Driver: asDriver(d),
     })) }] } });
   }
+  const pits = p.match(new RegExp(`^/${y}/(\\d+)/pitstops\\.json$`));
+  if (pits) {
+    // Mercedes crew ~0.4 s quicker than the field; one drive-through penalty.
+    const base = pits[1] === '1' ? 21 : 28;
+    const PitStops = DRIVERS.flatMap((d, i) => [
+      { driverId: d.driverId, stop: '1', lap: String(18 + i), duration: (base + [-0.3, -0.5, 0.2, 0.6][i] + Number(pits[1]) * 0.05).toFixed(3) },
+      { driverId: d.driverId, stop: '2', lap: String(36 + i), duration: (base + [-0.4, -0.2, 0.4, 1.4][i]).toFixed(3) },
+    ]);
+    if (pits[1] === '2') PitStops.push({ driverId: 'perez', stop: '3', lap: '44', duration: (base + 20).toFixed(3) });
+    return mr({ RaceTable: { Races: [{ PitStops }] } });
+  }
   const round = p.match(new RegExp(`^/${y}/(\\d+)/(results|laps)\\.json$`));
   if (round) {
     const race = RACES.find(r => r.round === round[1]);

@@ -73,12 +73,18 @@ await step('driver standings', () => jolpica.getDriverStandings('current'));
 await step('constructor standings', () => jolpica.getConstructorStandings('current'));
 const lastRace = await step('last race result', () => jolpica.getLastRaceResult());
 const season = schedule?.[0]?.season || lastRace?.season;
+let results = null;
 if (season) {
   manifest.season = season;
-  await step(`${season} race results`, () => jolpica.getRaceResults(season));
+  results = await step(`${season} race results`, () => jolpica.getRaceResults(season));
   await step(`${season} sprint results`, () => jolpica.getSprintResults(season));
   // Race Flow requests the schedule by numeric year rather than 'current'.
   await step(`${season} schedule`, () => jolpica.getSchedule(Number(season)));
+}
+if (season && results?.length) {
+  // Team Ops page: every round's pit stops.
+  await step(`${season} pit stops (${results.length} rounds)`,
+    () => jolpica.getSeasonPitStops(Number(season), results.map(r => r.round)));
 }
 if (lastRace) {
   await step(`R${lastRace.round} results`, () => jolpica.getRaceResults(Number(lastRace.season), lastRace.round));
